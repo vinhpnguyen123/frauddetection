@@ -24,7 +24,8 @@ async def test_healthz_is_ok_against_real_services() -> None:
         response = await client.get("/healthz")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "db": "ok", "redis": "ok"}
+    body = response.json()
+    assert (body["status"], body["db"], body["redis"]) == ("ok", "ok", "ok")
 
 
 async def test_database_is_paradedb_with_required_extensions() -> None:

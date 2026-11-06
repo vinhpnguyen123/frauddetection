@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     database_url: str
     redis_url: str
+    embedder_url: str
     seed_password: SecretStr | None = None  # dev only, read by scripts/seed.py
 
 
