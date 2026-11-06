@@ -1,0 +1,84 @@
+name: ci
+
+on:
+  push:
+    # Slice branches are excluded: they get CI through their PR.
+    branches:
+      - main
+      - "m[0-9][0-9]-*"
+      - "!m[0-9][0-9]-s[0-9]*"
+  pull_request:
+    branches:
+      - main
+      - "m[0-9][0-9]-*"
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Reject local-only files, env files and stray PDFs
+        run: |
+          local_only='^(CLAUDE\.md|AGENTS\.md|IMPLEMENTATION_PLAN\.md|\.claude/.*|docs/(CONTEXT|ARCHITECTURE|SCHEMA|CONVENTIONS|GIT_RULES|DATASET|EVALUATION)\.md)$'
+          env_files='(^|/)\.env(\.[^/]*)?$'
+          bad=$(git ls-files | grep -E "$local_only|$env_files" | grep -v '\.env\.example$' || true)
+          pdfs=$(git ls-files | grep -iE '\.pdf$' | grep -v '^backend/tests/fixtures/' || true)
+          if [ -n "$bad$pdfs" ]; then
+            printf 'Forbidden tracked files:\n%s\n%s\n' "$bad" "$pdfs"
+            exit 1
+          fi
+
+  attribution:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Reject AI attribution in commits and the PR body
+        env:
+          # Passed through env so PR text is never interpolated into the shell script.
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Matches plain, bracketed and Markdown-linked forms, in any case.
+          generated='generated with \[?claude code'
+          messages=$(git log --format=%B "$BASE_SHA..$HEAD_SHA")
+          if printf '%s\n' "$messages" | grep -Eiq "^co-authored-by:.*(claude|anthropic)|$generated" \
+            || printf '%s\n' "$messages" | grep -Eq '^Claude-Session:'; then
+            echo 'AI attribution found in a commit message'
+            exit 1
+          fi
+          if printf '%s\n' "$PR_BODY" | grep -Eiq "$generated"; then
+            echo 'AI attribution found in the PR body'
+            exit 1
+          fi
+
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.8.22"
+      - run: make lint
+
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.8.22"
+      - run: make test
+
+  docker-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - run: docker build backend
