@@ -5,6 +5,7 @@ description = "FinbudAI API and worker"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.20.1",
+    "argon2-cffi>=25.1.0",
     "asyncpg>=0.32.0",
     "celery[redis]>=5.7.0",
     "fastapi>=0.162.0",

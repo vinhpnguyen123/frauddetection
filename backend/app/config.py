@@ -3,6 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Repo-root .env for local runs. Containers get real env vars and have no such file.
@@ -16,6 +17,7 @@ class Settings(BaseSettings):
 
     database_url: str
     redis_url: str
+    seed_password: SecretStr | None = None  # dev only, read by scripts/seed.py
 
 
 @lru_cache
