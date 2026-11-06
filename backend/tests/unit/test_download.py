@@ -136,6 +136,84 @@ def test_requests_to_one_host_are_spaced_out() -> None:
     assert clock.sleeps == [2.0, 2.0]  # robots -> first document -> second document
 
 
+def redirect_to(location: str) -> httpx.Response:
+    return httpx.Response(302, headers={"location": location})
+
+
+def test_redirect_is_followed() -> None:
+    def doc(request: httpx.Request) -> httpx.Response:
+        return redirect_to("/moved.pdf") if request.url.path == "/doc.pdf" else pdf_response()
+
+    assert fetcher(site(doc=doc)).fetch_pdf(URL) == PDF
+
+
+def test_redirect_into_a_disallowed_path_is_blocked() -> None:
+    seen: list[str] = []
+
+    def doc(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url.path)
+        return redirect_to("/private/doc.pdf") if request.url.path == "/doc.pdf" else pdf_response()
+
+    robots = httpx.Response(200, text="User-agent: *\nDisallow: /private/\n")
+    with pytest.raises(Blocked, match="robots"):
+        fetcher(site(robots, doc=doc)).fetch_pdf(URL)
+    assert seen == ["/doc.pdf"]
+
+
+def test_cross_host_redirect_checks_the_robots_of_the_new_host() -> None:
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(f"{request.url.host}{request.url.path}")
+        if request.url.host == "other.test":
+            return httpx.Response(403)
+        if request.url.path == "/robots.txt":
+            return httpx.Response(404)
+        return redirect_to("https://other.test/doc.pdf")
+
+    with pytest.raises(Blocked, match="robots.txt returned 403"):
+        fetcher(handler).fetch_pdf(URL)
+    assert "other.test/doc.pdf" not in seen
+
+
+def test_redirect_within_a_host_keeps_the_spacing() -> None:
+    def doc(request: httpx.Request) -> httpx.Response:
+        return redirect_to("/moved.pdf") if request.url.path == "/doc.pdf" else pdf_response()
+
+    clock = Clock()
+    fetcher(site(doc=doc), clock).fetch_pdf(URL)
+    assert clock.sleeps == [download.MIN_DELAY_SECONDS, download.MIN_DELAY_SECONDS]
+
+
+def test_redirect_loop_gives_up() -> None:
+    with pytest.raises(httpx.TooManyRedirects):
+        fetcher(site(doc=lambda _: redirect_to("/doc.pdf"))).fetch_pdf(URL)
+
+
+def test_redirected_robots_txt_is_still_read() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/robots.txt":
+            return redirect_to("/rules.txt")
+        if request.url.path == "/rules.txt":
+            return httpx.Response(200, text="User-agent: *\nDisallow: /doc.pdf\n")
+        return pdf_response()
+
+    with pytest.raises(Blocked, match="disallowed"):
+        fetcher(handler).fetch_pdf(URL)
+
+
+def test_failed_manifest_write_keeps_the_previous_manifest(tmp_path: Path) -> None:
+    manifest = tmp_path / "manifest.csv"
+    download.write_manifest(manifest, [{"doc_id": "a", "sha256": "1"}])
+    before = manifest.read_bytes()
+
+    with pytest.raises(ValueError):
+        download.write_manifest(manifest, [{"doc_id": "a"}, {"doc_id": "b", "extra": "x"}])
+
+    assert manifest.read_bytes() == before
+    assert list(tmp_path.iterdir()) == [manifest]
+
+
 def test_download_saves_and_records_the_hash(tmp_path: Path) -> None:
     entry = row()
     assert download.download_row(entry, fetcher(site()), tmp_path, recheck=False) == "downloaded"

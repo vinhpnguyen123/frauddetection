@@ -7,6 +7,7 @@ blocked, to be saved by hand into data/raw/. The next run records the hash of su
 import argparse
 import csv
 import hashlib
+import os
 import sys
 import time
 from collections.abc import Callable
@@ -24,6 +25,7 @@ RAW_DIR = ROOT / "data" / "raw"
 
 MIN_DELAY_SECONDS = 2.0
 MAX_ATTEMPTS = 3
+MAX_REDIRECTS = 5
 RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 
 Row = dict[str, str]
@@ -43,10 +45,18 @@ def read_manifest(path: Path) -> list[Row]:
 
 
 def write_manifest(path: Path, rows: list[Row]) -> None:
-    with path.open("w", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=list(rows[0]))
-        writer.writeheader()
-        writer.writerows(rows)
+    """Replace the manifest atomically: a failed write leaves the previous one untouched."""
+    temp = path.with_name(f"{path.name}.tmp")
+    try:
+        with temp.open("w", newline="", encoding="utf-8") as file:
+            writer = csv.DictWriter(file, fieldnames=list(rows[0]))
+            writer.writeheader()
+            writer.writerows(rows)
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temp, path)
+    finally:
+        temp.unlink(missing_ok=True)
 
 
 def target_path(row: Row, raw_dir: Path) -> Path:
@@ -55,6 +65,10 @@ def target_path(row: Row, raw_dir: Path) -> Path:
 
 def file_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def redirect_target(response: httpx.Response) -> str:
+    return str(response.url.join(response.headers["location"]))
 
 
 class Fetcher:
@@ -84,13 +98,21 @@ class Fetcher:
         finally:
             self.last_request[host] = self.clock()
 
+    def _get_robots_txt(self, url: str) -> httpx.Response:
+        for _ in range(MAX_REDIRECTS + 1):
+            response = self._get(url)
+            if not response.has_redirect_location:
+                return response
+            url = redirect_target(response)
+        raise httpx.TooManyRedirects(f"too many redirects for {url}")
+
     def _robots_for(self, url: str) -> RobotFileParser | None:
         """Return the parsed rules, or None when the site has no robots.txt."""
         parts = urlsplit(url)
         if parts.netloc in self.refused:
             raise Blocked(self.refused[parts.netloc])
         if parts.netloc not in self.robots:
-            response = self._get(f"{parts.scheme}://{parts.netloc}/robots.txt")
+            response = self._get_robots_txt(f"{parts.scheme}://{parts.netloc}/robots.txt")
             if response.status_code == 404:
                 self.robots[parts.netloc] = None
             elif response.status_code != 200:
@@ -102,8 +124,8 @@ class Fetcher:
                 self.robots[parts.netloc] = parser
         return self.robots[parts.netloc]
 
-    def fetch_pdf(self, url: str) -> bytes:
-        """Return the PDF bytes. Raises Blocked, NotPdf or httpx.HTTPError."""
+    def _get_allowed(self, url: str) -> httpx.Response:
+        """One hop: robots.txt of this URL is checked first, and a redirect is returned as is."""
         rules = self._robots_for(url)
         agent = str(self.client.headers["user-agent"])
         if rules is not None and not rules.can_fetch(agent, url):
@@ -122,12 +144,27 @@ class Fetcher:
                 continue
             if response.status_code in {401, 403}:
                 raise Blocked(f"HTTP {response.status_code}")
-            response.raise_for_status()
+            if not response.has_redirect_location:
+                response.raise_for_status()
+            return response
+        raise AssertionError("unreachable: the last attempt returns or raises")
+
+    def fetch_pdf(self, url: str) -> bytes:
+        """Return the PDF bytes. Raises Blocked, NotPdf or httpx.HTTPError.
+
+        Redirects are followed here, not by the client, so that every hop gets its own robots
+        check and per-host delay.
+        """
+        for _ in range(MAX_REDIRECTS + 1):
+            response = self._get_allowed(url)
+            if response.has_redirect_location:
+                url = redirect_target(response)
+                continue
             content_type = response.headers.get("content-type", "")
             if "pdf" not in content_type.lower() or not response.content.startswith(b"%PDF-"):
                 raise NotPdf(content_type or "no content type")
             return response.content
-        raise AssertionError("unreachable: the last attempt returns or raises")
+        raise httpx.TooManyRedirects(f"too many redirects for {url}")
 
 
 def download_row(row: Row, fetcher: Fetcher, raw_dir: Path, recheck: bool) -> str:
@@ -214,7 +251,7 @@ def main() -> int:
     agent = (
         f"FraudDetection-corpus/0.1 (+https://github.com/vinhpnguyen123/frauddetection; {email})"
     )
-    with httpx.Client(headers={"user-agent": agent}, follow_redirects=True, timeout=60.0) as client:
+    with httpx.Client(headers={"user-agent": agent}, timeout=60.0) as client:
         return run_download(
             chosen, Fetcher(client), RAW_DIR, args.recheck, lambda: write_manifest(MANIFEST, rows)
         )
