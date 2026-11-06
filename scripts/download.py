@@ -9,6 +9,7 @@ import csv
 import hashlib
 import os
 import sys
+import tempfile
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -45,18 +46,25 @@ def read_manifest(path: Path) -> list[Row]:
 
 
 def write_manifest(path: Path, rows: list[Row]) -> None:
-    """Replace the manifest atomically: a failed write leaves the previous one untouched."""
-    temp = path.with_name(f"{path.name}.tmp")
-    try:
-        with temp.open("w", newline="", encoding="utf-8") as file:
+    """Replace the manifest atomically: a failed write leaves the previous one untouched.
+
+    The temp file is unique per write. Overlapping runs cannot corrupt the file, but the last one
+    wins, so hashes from the other run can be lost: run one download at a time.
+    """
+    with tempfile.NamedTemporaryFile(
+        "w", dir=path.parent, suffix=".tmp", delete=False, newline="", encoding="utf-8"
+    ) as file:
+        temp = Path(file.name)
+        try:
             writer = csv.DictWriter(file, fieldnames=list(rows[0]))
             writer.writeheader()
             writer.writerows(rows)
             file.flush()
             os.fsync(file.fileno())
-        os.replace(temp, path)
-    finally:
-        temp.unlink(missing_ok=True)
+            temp.chmod(0o644)  # mkstemp creates 0600
+            os.replace(temp, path)
+        finally:
+            temp.unlink(missing_ok=True)
 
 
 def target_path(row: Row, raw_dir: Path) -> Path:

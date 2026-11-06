@@ -214,6 +214,26 @@ def test_failed_manifest_write_keeps_the_previous_manifest(tmp_path: Path) -> No
     assert list(tmp_path.iterdir()) == [manifest]
 
 
+def test_overlapping_manifest_writes_do_not_share_a_temp_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    manifest = tmp_path / "manifest.csv"
+    real_replace = download.os.replace
+    overlapped: list[bool] = []
+
+    def replace_after_another_writer(source: str, target: Path) -> None:
+        if not overlapped:
+            overlapped.append(True)
+            download.write_manifest(manifest, [{"doc_id": "other"}])
+        real_replace(source, target)
+
+    monkeypatch.setattr(download.os, "replace", replace_after_another_writer)
+    download.write_manifest(manifest, [{"doc_id": "first"}])
+
+    assert download.read_manifest(manifest) == [{"doc_id": "first"}]
+    assert list(tmp_path.iterdir()) == [manifest]
+
+
 def test_download_saves_and_records_the_hash(tmp_path: Path) -> None:
     entry = row()
     assert download.download_row(entry, fetcher(site()), tmp_path, recheck=False) == "downloaded"
