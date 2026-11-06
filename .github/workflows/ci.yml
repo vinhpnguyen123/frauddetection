@@ -46,13 +46,15 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
+          # Matches plain, bracketed and Markdown-linked forms, in any case.
+          generated='generated with \[?claude code'
           messages=$(git log --format=%B "$BASE_SHA..$HEAD_SHA")
-          if printf '%s\n' "$messages" | grep -Eiq '^co-authored-by:.*(claude|anthropic)' \
+          if printf '%s\n' "$messages" | grep -Eiq "^co-authored-by:.*(claude|anthropic)|$generated" \
             || printf '%s\n' "$messages" | grep -Eq '^Claude-Session:'; then
             echo 'AI attribution found in a commit message'
             exit 1
           fi
-          if printf '%s\n' "$PR_BODY" | grep -Fq 'Generated with [Claude Code]'; then
+          if printf '%s\n' "$PR_BODY" | grep -Eiq "$generated"; then
             echo 'AI attribution found in the PR body'
             exit 1
           fi
