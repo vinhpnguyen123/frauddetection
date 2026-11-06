@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     redis_url: str
     embedder_url: str
     seed_password: SecretStr | None = None  # dev only, read by scripts/seed.py
+    download_contact_email: str | None = None  # dev only, read by scripts/download.py
 
 
 @lru_cache
