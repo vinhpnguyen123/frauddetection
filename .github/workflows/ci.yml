@@ -70,6 +70,33 @@ jobs:
 
   test:
     runs-on: ubuntu-24.04
+    env:
+      # Throwaway credentials for the service container below; not a secret.
+      DATABASE_URL: postgresql+asyncpg://finbudai:ci-only@127.0.0.1:5432/finbudai
+      REDIS_URL: redis://127.0.0.1:6379/0
+    services:
+      postgres:
+        image: paradedb/paradedb:v0.26.5-pg17
+        env:
+          POSTGRES_USER: finbudai
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: finbudai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U finbudai -d finbudai"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+      redis:
+        image: redis:8.10.3-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.3.3
