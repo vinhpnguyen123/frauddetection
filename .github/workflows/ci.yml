@@ -74,6 +74,8 @@ jobs:
       # Throwaway credentials for the service container below; not a secret.
       DATABASE_URL: postgresql+asyncpg://finbudai:ci-only@127.0.0.1:5432/finbudai
       REDIS_URL: redis://127.0.0.1:6379/0
+      # Nothing listens here in CI; /healthz reports the embedder but does not depend on it.
+      EMBEDDER_URL: http://127.0.0.1:8001
     services:
       postgres:
         image: paradedb/paradedb:v0.26.5-pg17

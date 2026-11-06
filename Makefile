@@ -1,4 +1,4 @@
-.PHONY: up down migrate seed lint test
+.PHONY: up down migrate seed embedder lint test
 
 up:
 	docker compose up -d --build --wait
@@ -9,6 +9,9 @@ down:
 migrate:
 	cd backend && uv run --locked alembic upgrade head
 
+embedder:
+	cd embedder && uv run --locked --extra ml uvicorn main:app --host 127.0.0.1 --port 8001
+
 seed:
 	cd backend && PYTHONPATH=. uv run --locked python ../scripts/seed.py
 
@@ -17,6 +20,10 @@ lint:
 	cd backend && uv run --locked ruff check --config pyproject.toml . ../scripts
 	cd backend && uv run --locked ruff format --check --config pyproject.toml . ../scripts
 	cd backend && uv run --locked mypy app
+	cd embedder && uv run --locked ruff check .
+	cd embedder && uv run --locked ruff format --check .
+	cd embedder && uv run --locked mypy main.py config.py
 
 test:
 	cd backend && uv run --locked pytest
+	cd embedder && uv run --locked pytest
