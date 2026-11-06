@@ -1,0 +1,45 @@
+# local-only context / skill files
+CLAUDE.md
+AGENTS.md
+IMPLEMENTATION_PLAN.md
+docs/CONTEXT.md
+docs/ARCHITECTURE.md
+docs/SCHEMA.md
+docs/CONVENTIONS.md
+docs/GIT_RULES.md
+docs/DATASET.md
+docs/EVALUATION.md
+.claude/
+
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# data and caches
+data/raw/
+/storage/
+eval/.cache/
+*.pdf
+!backend/tests/fixtures/*.pdf
+# synthetic docs are committed as Markdown sources; their PDFs are generated into data/raw/
+
+# python
+__pycache__/
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# node
+node_modules/
+.next/
+
+# models (anchored: an unanchored models/ would also ignore backend/app/models/)
+/models/
+*.safetensors
+*.bin
+
+# macOS
+.DS_Store
