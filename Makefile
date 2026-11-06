@@ -1,4 +1,10 @@
-.PHONY: lint test
+.PHONY: up down lint test
+
+up:
+	docker compose up -d --build --wait
+
+down:
+	docker compose down
 
 # --locked fails if uv.lock is out of date with pyproject.toml.
 lint:
