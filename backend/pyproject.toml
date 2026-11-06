@@ -12,6 +12,7 @@ dependencies = [
     "httpx>=0.28.1",
     "pgvector>=0.5.1",
     "pydantic-settings>=2.16.2",
+    "pymupdf<2",
     "sqlalchemy[asyncio]>=2.1.8",
     "uvicorn>=0.54.0",
 ]
@@ -41,8 +42,10 @@ pythonpath = [".", ".."]
 
 [dependency-groups]
 dev = [
+    "markdown>=3.11.3",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
     "pytest-asyncio>=1.4.1.post1",
     "ruff>=0.17.4",
+    "types-markdown>=3.11.2.20261029",
 ]
