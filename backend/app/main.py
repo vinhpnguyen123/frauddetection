@@ -20,6 +20,6 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 def create_app() -> FastAPI:
     """Build the API application."""
-    app = FastAPI(title="FinbudAI", lifespan=lifespan)
+    app = FastAPI(title="FraudDetection", lifespan=lifespan)
     app.include_router(health.router)
     return app

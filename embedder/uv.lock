@@ -215,7 +215,7 @@ wheels = [
 ]
 
 [[package]]
-name = "finbudai-embedder"
+name = "frauddetection-embedder"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

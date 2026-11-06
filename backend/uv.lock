@@ -293,7 +293,7 @@ wheels = [
 ]
 
 [[package]]
-name = "finbudai-backend"
+name = "frauddetection-backend"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

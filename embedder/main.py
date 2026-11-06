@@ -17,7 +17,7 @@ MAX_BATCH = 256
 # One model call at a time: the dev machine has 8 GB, and two loads at once would not fit.
 model_lock = Lock()
 
-app = FastAPI(title="FinbudAI embedder")
+app = FastAPI(title="FraudDetection embedder")
 
 
 class EmbedRequest(BaseModel):

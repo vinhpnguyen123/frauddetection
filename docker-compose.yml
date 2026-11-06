@@ -1,3 +1,5 @@
+name: frauddetection
+
 x-backend: &backend
   build: ./backend
   environment:
