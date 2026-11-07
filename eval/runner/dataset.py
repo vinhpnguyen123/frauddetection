@@ -1,5 +1,6 @@
 """Eval set items, as specified in docs/EVALUATION.md §1."""
 
+import hashlib
 from pathlib import Path
 from typing import Literal, Self
 
@@ -7,6 +8,33 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 ROOT = Path(__file__).resolve().parents[2]
 DATASETS = ROOT / "eval" / "datasets"
+
+
+class LabelProvenance(BaseModel):
+    """Bind a labeling declaration to the exact dataset bytes it describes."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    dataset_sha256: str
+    drafted_by: str
+    reviewed_by: str | None
+
+    def description(self) -> str:
+        review = (
+            f"reviewed item by item by {self.reviewed_by}"
+            if self.reviewed_by
+            else "not human-reviewed"
+        )
+        return f"drafted by {self.drafted_by}; {review}"
+
+
+def load_provenance(path: Path) -> LabelProvenance:
+    """Reject stale provenance rather than carry a review claim onto edited labels."""
+    metadata = path.with_suffix(".meta.json")
+    provenance = LabelProvenance.model_validate_json(metadata.read_text())
+    if provenance.dataset_sha256 != hashlib.sha256(path.read_bytes()).hexdigest():
+        raise ValueError(f"{metadata.name}: dataset hash mismatch; update labeling provenance")
+    return provenance
 
 
 class Anchor(BaseModel):

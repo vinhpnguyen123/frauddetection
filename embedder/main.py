@@ -7,7 +7,7 @@ from typing import Annotated, Any, Literal
 from fastapi import Depends, FastAPI
 from pydantic import BaseModel, Field
 
-from config import get_settings
+from config import Settings, get_settings
 
 # Document and query embeddings need different task prefixes. They are added only here, so a
 # client cannot forget them.
@@ -98,8 +98,9 @@ def tokenizer() -> Any:
 
 
 @app.get("/healthz")
-def healthz() -> dict[str, str]:
-    return {"status": "ok"}
+def healthz(settings: Annotated[Settings, Depends(get_settings)]) -> dict[str, str]:
+    """Name the reranker from settings, so eval reports record it without loading weights."""
+    return {"status": "ok", "rerank_model": settings.rerank_model}
 
 
 # Plain `def`: FastAPI runs these in a thread, keeping slow model calls off the event loop.

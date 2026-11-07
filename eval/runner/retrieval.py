@@ -1,15 +1,17 @@
-"""Retrieval eval: `python -m eval.runner.retrieval <set> <config|all>`, or `--check <set>`.
+"""Retrieval eval: `python -m eval.runner.retrieval <set> <config|all> [label]`, or `--check <set>`.
 
 Reports go to eval/reports/. Needs the stack and `make embedder`. No LLM is called.
 """
 
+import argparse
 import asyncio
+import hashlib
 import json
 import subprocess
 import sys
 import time
 from dataclasses import asdict, dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from itertools import combinations
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -20,16 +22,18 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app import db
 from app.config import get_settings
-from app.embedder import http_embedder
+from app.embedder import HttpEmbedder, http_embedder
 from app.models import Chunk, Document, Tenant
 from app.retrieval.bm25 import Bm25Retriever
 from app.retrieval.config import RetrievalConfig
 from app.retrieval.dense import DenseRetriever
 from app.retrieval.fts import FtsRetriever
-from app.retrieval.protocols import Embedder, RetrievalContext, Retriever
+from app.retrieval.hybrid import HybridRetriever
+from app.retrieval.protocols import Embedder, Reranker, RetrievalContext, Retriever
 from app.retrieval.query_processing import expand_query
+from app.retrieval.rerank import RerankRetriever
 from eval.runner.anchors import holds_quote, same_passage
-from eval.runner.dataset import DATASETS, ROOT, EvalItem, load_items
+from eval.runner.dataset import DATASETS, ROOT, EvalItem, load_items, load_provenance
 from eval.runner.metrics import (
     RECALL_AT,
     bootstrap_ci,
@@ -44,15 +48,31 @@ from eval.runner.metrics import (
 REPORTS = ROOT / "eval" / "reports"
 LEVELS = frozenset({"public", "tenant_private"})
 METRICS = ("p_at_5", "recall_at_20", "mrr")
+ALLOW_UNMATCHED = "--allow-unmatched"
+RERANK_MAX_TOKENS = 512  # the tokenizer limit of the cross-encoder; longer input is cut off
 # The rows of docs/EVALUATION.md §3. The `_raw` configs measure what expansion adds.
+# Rerank builds on `hybrid_raw`; the run fills in the model the service reports.
 CONFIGS = {
     "fts": RetrievalConfig(method="fts", query_expansion=True),
     "bm25": RetrievalConfig(method="bm25", query_expansion=True),
     "dense_exact": RetrievalConfig(method="dense", dense_mode="exact"),
     "dense_hnsw": RetrievalConfig(method="dense", dense_mode="hnsw"),
+    "hybrid": RetrievalConfig(method="hybrid", dense_mode="exact", query_expansion=True),
     "fts_raw": RetrievalConfig(method="fts"),
     "bm25_raw": RetrievalConfig(method="bm25"),
+    "hybrid_raw": RetrievalConfig(method="hybrid", dense_mode="exact"),
+    "rerank_top20": RetrievalConfig(method="rerank", dense_mode="exact", rerank_top_n=20),
+    "rerank_top50": RetrievalConfig(method="rerank", dense_mode="exact", rerank_top_n=50),
 }
+COMPARISON_CONFIGS = (
+    "fts",
+    "bm25",
+    "dense_exact",
+    "dense_hnsw",
+    "hybrid_raw",
+    "rerank_top20",
+    "rerank_top50",
+)
 
 
 @dataclass(frozen=True)
@@ -78,14 +98,31 @@ class ItemResult:
 
 
 def build_retriever(
-    config: RetrievalConfig, sessions: async_sessionmaker[AsyncSession], embedder: Embedder
+    config: RetrievalConfig,
+    sessions: async_sessionmaker[AsyncSession],
+    embedder: Embedder,
+    reranker: Reranker | None = None,
 ) -> Retriever:
     if config.method == "fts":
         return FtsRetriever(sessions)
     if config.method == "bm25":
         return Bm25Retriever(sessions)
     assert config.dense_mode is not None
-    return DenseRetriever(sessions, embedder, config.dense_mode)
+    dense = DenseRetriever(sessions, embedder, config.dense_mode)
+    if config.method == "dense":
+        return dense
+    hybrid = HybridRetriever(
+        Bm25Retriever(sessions),
+        dense,
+        k_bm25=config.k_bm25,
+        k_dense=config.k_dense,
+        rrf_k=config.rrf_k,
+        query_expansion=config.query_expansion,
+    )
+    if config.method == "hybrid":
+        return hybrid
+    assert reranker is not None and config.rerank_top_n is not None
+    return RerankRetriever(hybrid, reranker, sessions, top_n=config.rerank_top_n)
 
 
 async def load_corpus(sessions: async_sessionmaker[AsyncSession]) -> dict[UUID, CorpusChunk]:
@@ -132,7 +169,9 @@ async def run_item(
     tenant_id: UUID,
     corpus: dict[UUID, CorpusChunk],
 ) -> ItemResult:
-    query = expand_query(item.query) if config.query_expansion else item.query
+    # Hybrid expands inside the retriever, because only its BM25 input may change.
+    expand = config.query_expansion and config.method not in ("hybrid", "rerank")
+    query = expand_query(item.query) if expand else item.query
     context = RetrievalContext(uuid4(), tenant_id, LEVELS)
     started = time.perf_counter()
     hits = await retriever.search(query, context=context, limit=RECALL_AT)
@@ -227,11 +266,16 @@ def table(rows: list[tuple[str, object]]) -> list[str]:
 
 
 def header(report: dict[str, object]) -> list[str]:
+    dataset_hash = report.get("dataset_sha256", "not recorded in this historical report")
     return [
         f"- Set: `{report['set']}` ({report['set_size']} items), date {report['date']}",
         f"- Git SHA: `{report['git_sha']}`",
         f"- Corpus: {report['corpus']}",
         f"- Labels: {report['labels']}",
+        f"- Dataset SHA-256: `{dataset_hash}`",
+        f"- Working tree dirty: {report.get('working_tree_dirty', 'not recorded')}; "
+        f"pre-commit labels allowed: {report.get('allow_uncommitted_labels', False)}",
+        f"- Input fingerprint: `{report.get('input_sha256', 'not recorded')}`",
         "- Metrics use answerable items; the headline rows use `real` items only.",
         "- P@5 ceiling: the best P@5 the labels allow, since few chunks may be relevant.",
     ]
@@ -255,7 +299,16 @@ def render_comparison(reports: list[dict[str, object]], hnsw: dict[str, float]) 
     lines += ["## real items", ""]
     lines += ["| Config | P@5 (95% CI) | Recall@20 (95% CI) | MRR (95% CI) | p50/p95 ms |"]
     lines += ["|---|---|---|---|---|"]
-    for report in reports:
+    primary = [
+        r
+        for name in COMPARISON_CONFIGS
+        for r in reports
+        if r.get("config_key", r["config_name"]) == name
+    ]
+    experiments = [
+        r for r in reports if r.get("config_key", r["config_name"]) not in COMPARISON_CONFIGS
+    ]
+    for report in primary:
         latency = report["latency_ms"]
         assert isinstance(latency, dict)
         lines.append(
@@ -263,6 +316,22 @@ def render_comparison(reports: list[dict[str, object]], hnsw: dict[str, float]) 
             f"| {cell(report['real'], 'recall_at_20')} | {cell(report['real'], 'mrr')} "
             f"| {latency['p50']:.1f} / {latency['p95']:.1f} |"
         )
+    if experiments:
+        lines += [
+            "",
+            "## Query expansion experiments (outside the seven main rows)",
+            "",
+        ]
+        lines += ["| Config | P@5 (95% CI) | Recall@20 (95% CI) | MRR (95% CI) | p50/p95 ms |"]
+        lines += ["|---|---|---|---|---|"]
+        for report in experiments:
+            latency = report["latency_ms"]
+            assert isinstance(latency, dict)
+            lines.append(
+                f"| {report['config_name']} | {cell(report['real'], 'p_at_5')} "
+                f"| {cell(report['real'], 'recall_at_20')} | {cell(report['real'], 'mrr')} "
+                f"| {latency['p50']:.1f} / {latency['p95']:.1f} |"
+            )
     lines += ["", "## By group, P@5 / Recall@20 / MRR means", ""]
     for report in reports:
         by_category = report["real_by_category"]
@@ -270,6 +339,15 @@ def render_comparison(reports: list[dict[str, object]], hnsw: dict[str, float]) 
         rows: list[tuple[str, object]] = [(f"real / {k}", v) for k, v in by_category.items()]
         rows.append(("synthetic", report["synthetic"]))
         lines += [f"### {report['config_name']}", "", *table(rows), ""]
+    lines += ["## Reranking", ""]
+    lines += ["- `rerank_top20` only reorders the `hybrid_raw` top 20, so its Recall@20 equals"]
+    lines += ["  that row by construction. `rerank_top50` can bring in other chunks."]
+    lines += ["- Rows return 20 results so all metrics stay comparable; generation keeps fewer."]
+    lines += [
+        f"- Chunks over {RERANK_MAX_TOKENS} tokens, counted with the embedding tokenizer: "
+        f"{reports[0]['chunks_over_rerank_limit']}. The cross-encoder cuts off the end of these.",
+        "",
+    ]
     lines += [f"## HNSW recall@{K} against exact search", ""]
     lines += ["The HNSW row is forced per transaction, not what the planner would pick here.", ""]
     lines += [f"- {group}: {value:.4f}" for group, value in hnsw.items()]
@@ -289,6 +367,30 @@ def require_committed(path: Path) -> None:
         sys.exit(f"{path.name} has uncommitted changes: commit the labels before an eval run")
 
 
+def input_fingerprint(path: Path, *, allow_uncommitted_labels: bool = False) -> dict[str, object]:
+    """Keep the normal commit gate; explicitly authorized pre-commit runs record their bytes."""
+    if not allow_uncommitted_labels:
+        require_committed(path)
+        require_committed(path.with_suffix(".meta.json"))
+    paths = {path, path.with_suffix(".meta.json")}
+    for folder in ("backend/app", "eval/runner", "scripts"):
+        paths.update((ROOT / folder).rglob("*.py"))
+    paths.update((ROOT / "embedder").glob("*.py"))
+    for folder in ("backend", "embedder"):
+        paths.update(ROOT / folder / name for name in ("pyproject.toml", "uv.lock"))
+    hashes = {
+        str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths)
+    }
+    digest = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
+    dirty = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)
+    return {
+        "allow_uncommitted_labels": allow_uncommitted_labels,
+        "working_tree_dirty": bool(dirty.strip()),
+        "input_sha256": digest,
+        "input_files_sha256": hashes,
+    }
+
+
 async def corpus_summary(sessions: async_sessionmaker[AsyncSession]) -> str:
     async with sessions() as session:
         chunks = await session.scalar(
@@ -298,17 +400,56 @@ async def corpus_summary(sessions: async_sessionmaker[AsyncSession]) -> str:
     return f"{documents} documents, {chunks} chunks, {get_settings().embed_model}"
 
 
+async def chunks_over_rerank_limit(sessions: async_sessionmaker[AsyncSession]) -> int:
+    statement = (
+        select(func.count())
+        .select_from(Chunk)
+        .where(Chunk.is_current, Chunk.token_count > RERANK_MAX_TOKENS)
+    )
+    async with sessions() as session:
+        return await session.scalar(statement) or 0
+
+
+async def resolve_config(name: str, embedder: HttpEmbedder) -> RetrievalConfig:
+    """Record the model the service runs, so the report and its config hash name the real one."""
+    config = CONFIGS[name]
+    if config.method != "rerank":
+        return config
+    return config.model_copy(update={"rerank_model": await embedder.rerank_model()})
+
+
+def unmatched_anchors(items: list[EvalItem], corpus: dict[UUID, CorpusChunk]) -> list[str]:
+    """One problem per anchor that matches no chunk."""
+    return [
+        f"{item.id}: no chunk of {anchor.doc_id} holds: {anchor.quote}"
+        for item in items
+        for anchor, chunks in zip(item.relevant, anchor_chunks(item, corpus), strict=True)
+        if not chunks
+    ]
+
+
+def duplicate_passages(items: list[EvalItem]) -> list[str]:
+    """One problem per anchor pair repeating a passage: Recall would count it twice."""
+    return [
+        f"{item.id}: same passage twice in {first.doc_id}: {first.quote}"
+        for item in items
+        for first, second in combinations(item.relevant, 2)
+        if first.doc_id == second.doc_id and same_passage(first.quote, second.quote)
+    ]
+
+
 def check(items: list[EvalItem], corpus: dict[UUID, CorpusChunk]) -> list[str]:
-    """Return one problem per anchor that matches no chunk, or repeats a passage of its item."""
-    problems = []
-    for item in items:
-        for anchor, chunks in zip(item.relevant, anchor_chunks(item, corpus), strict=True):
-            if not chunks:
-                problems.append(f"{item.id}: no chunk of {anchor.doc_id} holds: {anchor.quote}")
-        for first, second in combinations(item.relevant, 2):
-            if first.doc_id == second.doc_id and same_passage(first.quote, second.quote):
-                problems.append(f"{item.id}: same passage twice in {first.doc_id}: {first.quote}")
-    return problems
+    return unmatched_anchors(items, corpus) + duplicate_passages(items)
+
+
+def blocking_problems(
+    items: list[EvalItem], corpus: dict[UUID, CorpusChunk], *, allow_unmatched: bool
+) -> list[str]:
+    """What stops a run. Only a chunking experiment may lose an anchor: other boundaries can split
+    a quote too evenly to match, and it then counts as a miss. Duplicates always stop a run."""
+    if allow_unmatched:
+        return duplicate_passages(items)
+    return check(items, corpus)
 
 
 async def tenant_ids(sessions: async_sessionmaker[AsyncSession]) -> dict[str, UUID]:
@@ -333,18 +474,30 @@ async def hnsw_recall(
     }
 
 
-async def evaluate(set_name: str, config_name: str) -> None:
+async def evaluate(
+    set_name: str,
+    config_name: str,
+    label: str | None = None,
+    *,
+    allow_unmatched: bool = False,
+    allow_uncommitted_labels: bool = False,
+) -> None:
+    """Run one config or `all`. `label` keeps an experiment's report apart from the main row."""
     path = DATASETS / f"{set_name}.jsonl"
-    require_committed(path)
+    fingerprint = input_fingerprint(path, allow_uncommitted_labels=allow_uncommitted_labels)
+    provenance = load_provenance(path)
     items = load_items(path)
     sessions = db.get_sessionmaker()
     embedder = http_embedder()
     corpus = await load_corpus(sessions)
-    problems = check(items, corpus)
+    problems = blocking_problems(items, corpus, allow_unmatched=allow_unmatched)
     if problems:
         sys.exit("\n".join(problems))
     tenants = await tenant_ids(sessions)
     await embedder.embed_query("warm up")  # the first call loads the model
+    names = list(CONFIGS) if config_name == "all" else [config_name]
+    if any(CONFIGS[name].method == "rerank" for name in names):
+        await embedder.rerank("warm up", [(uuid4(), "warm up")], 1)
     today = date.today().isoformat()
     meta: dict[str, object] = {
         "set": set_name,
@@ -352,19 +505,32 @@ async def evaluate(set_name: str, config_name: str) -> None:
         "date": today,
         "git_sha": git_sha(),
         "corpus": await corpus_summary(sessions),
-        "labels": "drafted by Claude (an AI model), reviewed item by item by Vinh",
+        "labels": provenance.description(),
+        "dataset_sha256": provenance.dataset_sha256,
+        **fingerprint,
+        "chunks_over_rerank_limit": await chunks_over_rerank_limit(sessions),
+        "unmatched_anchors": len(unmatched_anchors(items, corpus)),
     }
     REPORTS.mkdir(exist_ok=True)
-    names = list(CONFIGS) if config_name == "all" else [config_name]
     reports = []
-    for name in names:
-        config = CONFIGS[name]
-        retriever = build_retriever(config, sessions, embedder)
+    for config_key in names:
+        config = await resolve_config(config_key, embedder)
+        retriever = build_retriever(config, sessions, embedder, embedder)
+        started_at = datetime.now(UTC).isoformat()
         results = [
             await run_item(item, config, retriever, tenants[item.ask_as_tenant], corpus)
             for item in items
         ]
+        name = f"{config_key}_{label}" if label else config_key
         report = build_report(name, config, results, meta)
+        report["config_key"] = config_key
+        report["started_at_utc"] = started_at
+        report["finished_at_utc"] = datetime.now(UTC).isoformat()
+        if (
+            input_fingerprint(path, allow_uncommitted_labels=True)["input_sha256"]
+            != fingerprint["input_sha256"]
+        ):
+            sys.exit("evaluation inputs changed during the run; refusing to write a report")
         reports.append(report)
         stem = REPORTS / f"{today}_{set_name}_{name}"
         stem.with_suffix(".json").write_text(json.dumps(report, indent=2) + "\n")
@@ -373,14 +539,17 @@ async def evaluate(set_name: str, config_name: str) -> None:
     if config_name == "all":
         hnsw = await hnsw_recall(items, sessions, embedder)
         comparison = render_comparison(reports, hnsw)
-        (REPORTS / f"{today}_{set_name}_comparison.md").write_text(comparison)
+        suffix = f"_{label}" if label else ""
+        (REPORTS / f"{today}_{set_name}_comparison{suffix}.md").write_text(comparison)
     leaks = [leak for report in reports for leak in report["leaks"]]  # type: ignore[attr-defined]
     if leaks:
         sys.exit("cross-tenant leak:\n" + "\n".join(leaks))
 
 
 async def run_check(set_name: str) -> None:
-    items = load_items(DATASETS / f"{set_name}.jsonl")
+    path = DATASETS / f"{set_name}.jsonl"
+    load_provenance(path)
+    items = load_items(path)
     problems = check(items, await load_corpus(db.get_sessionmaker()))
     print("\n".join(problems) or f"{len(items)} items, every anchor matches a chunk")
     if problems:
@@ -388,11 +557,32 @@ async def run_check(set_name: str) -> None:
 
 
 def main() -> None:
-    args = sys.argv[1:]
-    if args[0] == "--check":
-        asyncio.run(run_check(args[1]))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("set", nargs="?")
+    parser.add_argument("config", nargs="?", choices=[*CONFIGS, "all"])
+    parser.add_argument("label", nargs="?")
+    parser.add_argument("--check", metavar="SET")
+    parser.add_argument(ALLOW_UNMATCHED, action="store_true")
+    parser.add_argument(
+        "--allow-uncommitted-labels",
+        action="store_true",
+        help="Explicit pre-commit run; reports record dirty state and input hashes",
+    )
+    args = parser.parse_args()
+    if args.check:
+        asyncio.run(run_check(args.check))
     else:
-        asyncio.run(evaluate(args[0], args[1]))
+        if not args.set or not args.config:
+            parser.error("provide a set and config, or --check SET")
+        asyncio.run(
+            evaluate(
+                args.set,
+                args.config,
+                args.label,
+                allow_unmatched=args.allow_unmatched,
+                allow_uncommitted_labels=args.allow_uncommitted_labels,
+            )
+        )
 
 
 if __name__ == "__main__":

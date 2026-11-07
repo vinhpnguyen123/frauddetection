@@ -51,5 +51,14 @@ Set `answerable` to false, leave `relevant` empty and set `expected_refusal`:
 
 - Do not guess. If an item is ambiguous, write why in `notes`.
 - Record who drafted the labels and who reviewed them. Every report repeats this.
+- Store that declaration in `<set>.meta.json` beside the JSONL, with `dataset_sha256`,
+  `drafted_by` and `reviewed_by` (`null` until reviewed). The hash binds it to the exact
+  dataset bytes. Commit both files before evaluation. A changed dataset needs a fresh
+  review declaration; never carry a review claim onto labels the reviewer has not read.
+- An explicitly authorized pre-commit run may use `--allow-uncommitted-labels`.
+  The default commit gate remains enabled. Such reports must record the dirty working
+  tree, dataset hash, and hashes of runtime sources/lockfiles; do not present their
+  base git SHA as a commit containing the measured changes. Inputs must remain unchanged
+  throughout the run. This exception does not authorize tuning on test results.
 - After a run, a label error is fixed only with a note in the report and a re-run of every
   config. Never remove an item because of its result.

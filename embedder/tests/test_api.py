@@ -1,10 +1,12 @@
 """Uses fake models: CI has neither torch nor weights."""
 
 from collections.abc import Iterator
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
 
+from config import get_settings
 from main import MAX_BATCH, app, embed_model, rerank_model, tokenizer
 
 
@@ -58,8 +60,11 @@ def client(embedder: FakeEmbedModel, reranker: FakeRerankModel) -> Iterator[Test
     app.dependency_overrides.clear()
 
 
-def test_healthz_needs_no_model() -> None:
-    assert TestClient(app).get("/healthz").json() == {"status": "ok"}
+def test_healthz_names_the_reranker_without_loading_a_model() -> None:
+    app.dependency_overrides[get_settings] = lambda: SimpleNamespace(rerank_model="some/model")
+    response = TestClient(app).get("/healthz")
+    app.dependency_overrides.clear()
+    assert response.json() == {"status": "ok", "rerank_model": "some/model"}
 
 
 @pytest.mark.parametrize(
