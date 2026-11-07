@@ -5,6 +5,7 @@ from pydantic import BaseModel, ValidationError
 
 from app.generation.llm import FakeLLMProvider
 from app.retrieval.fts import FtsRetriever
+from app.retrieval.hybrid import HybridRetriever
 from app.retrieval.protocols import Retriever
 
 
@@ -12,7 +13,7 @@ class Answer(BaseModel):
     text: str
 
 
-@pytest.mark.parametrize("retriever", [Retriever, FtsRetriever])
+@pytest.mark.parametrize("retriever", [Retriever, FtsRetriever, HybridRetriever])
 def test_context_is_required_and_keyword_only(retriever: type) -> None:
     parameter = inspect.signature(retriever.search).parameters["context"]
     assert parameter.kind is inspect.Parameter.KEYWORD_ONLY

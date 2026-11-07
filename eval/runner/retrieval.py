@@ -26,6 +26,7 @@ from app.retrieval.bm25 import Bm25Retriever
 from app.retrieval.config import RetrievalConfig
 from app.retrieval.dense import DenseRetriever
 from app.retrieval.fts import FtsRetriever
+from app.retrieval.hybrid import HybridRetriever
 from app.retrieval.protocols import Embedder, RetrievalContext, Retriever
 from app.retrieval.query_processing import expand_query
 from eval.runner.anchors import holds_quote, same_passage
@@ -50,8 +51,10 @@ CONFIGS = {
     "bm25": RetrievalConfig(method="bm25", query_expansion=True),
     "dense_exact": RetrievalConfig(method="dense", dense_mode="exact"),
     "dense_hnsw": RetrievalConfig(method="dense", dense_mode="hnsw"),
+    "hybrid": RetrievalConfig(method="hybrid", dense_mode="exact", query_expansion=True),
     "fts_raw": RetrievalConfig(method="fts"),
     "bm25_raw": RetrievalConfig(method="bm25"),
+    "hybrid_raw": RetrievalConfig(method="hybrid", dense_mode="exact"),
 }
 
 
@@ -85,7 +88,17 @@ def build_retriever(
     if config.method == "bm25":
         return Bm25Retriever(sessions)
     assert config.dense_mode is not None
-    return DenseRetriever(sessions, embedder, config.dense_mode)
+    dense = DenseRetriever(sessions, embedder, config.dense_mode)
+    if config.method == "dense":
+        return dense
+    return HybridRetriever(
+        Bm25Retriever(sessions),
+        dense,
+        k_bm25=config.k_bm25,
+        k_dense=config.k_dense,
+        rrf_k=config.rrf_k,
+        query_expansion=config.query_expansion,
+    )
 
 
 async def load_corpus(sessions: async_sessionmaker[AsyncSession]) -> dict[UUID, CorpusChunk]:
@@ -132,7 +145,9 @@ async def run_item(
     tenant_id: UUID,
     corpus: dict[UUID, CorpusChunk],
 ) -> ItemResult:
-    query = expand_query(item.query) if config.query_expansion else item.query
+    # Hybrid expands inside the retriever, because only its BM25 input may change.
+    expand = config.query_expansion and config.method != "hybrid"
+    query = expand_query(item.query) if expand else item.query
     context = RetrievalContext(uuid4(), tenant_id, LEVELS)
     started = time.perf_counter()
     hits = await retriever.search(query, context=context, limit=RECALL_AT)

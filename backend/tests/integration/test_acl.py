@@ -12,6 +12,7 @@ from app.models import Chunk
 from app.retrieval.bm25 import Bm25Retriever, bm25_statement
 from app.retrieval.dense import MODE_SETTINGS, DenseMode, DenseRetriever, dense_statement
 from app.retrieval.fts import FtsRetriever, fts_statement
+from app.retrieval.hybrid import HybridRetriever
 from app.retrieval.protocols import RetrievalContext, Retriever
 from tests.fixtures.plans import explain
 from tests.fixtures.two_tenants import (
@@ -49,7 +50,7 @@ def sessions_for(connection: AsyncConnection) -> async_sessionmaker[AsyncSession
     )
 
 
-@pytest.fixture(params=["fts", "bm25", "dense_exact", "dense_hnsw"])
+@pytest.fixture(params=["fts", "bm25", "dense_exact", "dense_hnsw", "hybrid"])
 def retriever(connection: AsyncConnection, request: pytest.FixtureRequest) -> Retriever:
     """Every test using this runs once per retrieval path."""
     sessions = sessions_for(connection)
@@ -58,6 +59,14 @@ def retriever(connection: AsyncConnection, request: pytest.FixtureRequest) -> Re
         "bm25": lambda: Bm25Retriever(sessions),
         "dense_exact": lambda: DenseRetriever(sessions, FixedEmbedder(), "exact"),
         "dense_hnsw": lambda: DenseRetriever(sessions, FixedEmbedder(), "hnsw"),
+        "hybrid": lambda: HybridRetriever(
+            Bm25Retriever(sessions),
+            DenseRetriever(sessions, FixedEmbedder(), "exact"),
+            k_bm25=50,
+            k_dense=50,
+            rrf_k=60,
+            query_expansion=True,
+        ),
     }
     return builders[request.param]()
 
@@ -176,7 +185,7 @@ async def test_hits_are_ranked_and_respect_the_limit(
 ) -> None:
     hits = await retriever.search(SHARED_TERM, context=context(tenants.tenant_a), limit=1)
     assert [hit.rank for hit in hits] == [1]
-    assert hits[0].method in {"fts", "bm25", "dense_exact", "dense_hnsw"}
+    assert hits[0].method in {"fts", "bm25", "dense_exact", "dense_hnsw", "hybrid"}
 
 
 @pytest.mark.parametrize("build", [fts_statement, bm25_statement], ids=["fts", "bm25"])

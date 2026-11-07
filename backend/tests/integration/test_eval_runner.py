@@ -16,7 +16,13 @@ from eval.runner.retrieval import (
 )
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, async_sessionmaker
 
-from tests.fixtures.two_tenants import CANARY_B, PUBLIC_TEXT, SHARED_TERM, create_two_tenants
+from tests.fixtures.two_tenants import (
+    CANARY_B,
+    PUBLIC_TEXT,
+    SHARED_TERM,
+    create_two_tenants,
+    fixed_embedding,
+)
 
 META: dict[str, object] = {
     "set": "fixture",
@@ -26,6 +32,18 @@ META: dict[str, object] = {
     "corpus": "fixture",
     "labels": "fixture",
 }
+
+
+class RecordingEmbedder:
+    def __init__(self) -> None:
+        self.queries: list[str] = []
+
+    async def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        raise AssertionError("search must embed only the query")
+
+    async def embed_query(self, text: str) -> list[float]:
+        self.queries.append(text)
+        return fixed_embedding(text)
 
 
 def item(item_id: str, **changes: object) -> EvalItem:
@@ -41,7 +59,7 @@ def item(item_id: str, **changes: object) -> EvalItem:
     return EvalItem.model_validate(fields | changes)
 
 
-@pytest.mark.parametrize("name", ["fts", "bm25"])
+@pytest.mark.parametrize("name", ["fts", "bm25", "hybrid"])
 async def test_a_config_runs_and_reports(connection: AsyncConnection, name: str) -> None:
     tenants = await create_two_tenants(connection)
     sessions = async_sessionmaker(
@@ -49,7 +67,7 @@ async def test_a_config_runs_and_reports(connection: AsyncConnection, name: str)
     )
     corpus = await load_corpus(sessions)
     config = CONFIGS[name]
-    retriever = build_retriever(config, sessions, None)  # type: ignore[arg-type]
+    retriever = build_retriever(config, sessions, RecordingEmbedder())
     refusal = item(
         "dev-002",
         answerable=False,
@@ -72,6 +90,23 @@ async def test_a_config_runs_and_reports(connection: AsyncConnection, name: str)
     assert report["leaks"] == []
     assert "real / identifier" in render_config(report)
     assert name in render_comparison([report], {"all items": 1.0})
+
+
+async def test_the_runner_keeps_expansion_away_from_the_hybrid_dense_path(
+    connection: AsyncConnection,
+) -> None:
+    tenants = await create_two_tenants(connection)
+    sessions = async_sessionmaker(
+        bind=connection, class_=AsyncSession, join_transaction_mode="create_savepoint"
+    )
+    corpus = await load_corpus(sessions)
+    config = CONFIGS["hybrid"]
+    embedder = RecordingEmbedder()
+    retriever = build_retriever(config, sessions, embedder)
+
+    await run_item(item("dev-001", query="SAR"), config, retriever, tenants.tenant_a, corpus)
+
+    assert embedder.queries == ["SAR"]
 
 
 async def test_a_quote_the_corpus_lacks_is_reported(connection: AsyncConnection) -> None:
