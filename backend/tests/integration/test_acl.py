@@ -13,7 +13,8 @@ from app.retrieval.bm25 import Bm25Retriever, bm25_statement
 from app.retrieval.dense import MODE_SETTINGS, DenseMode, DenseRetriever, dense_statement
 from app.retrieval.fts import FtsRetriever, fts_statement
 from app.retrieval.hybrid import HybridRetriever
-from app.retrieval.protocols import RetrievalContext, Retriever
+from app.retrieval.protocols import RetrievalContext, Retriever, SearchHit
+from app.retrieval.rerank import RerankRetriever, chunk_texts_statement
 from tests.fixtures.plans import explain
 from tests.fixtures.two_tenants import (
     CANARY_A,
@@ -44,29 +45,46 @@ class FixedEmbedder:
         return fixed_embedding(text)
 
 
+class KeepOrderReranker:
+    """What the model scores does not matter to the ACL; what it is shown does."""
+
+    async def rerank(
+        self, query: str, candidates: list[tuple[UUID, str]], top_k: int
+    ) -> list[SearchHit]:
+        return [
+            SearchHit(chunk_id=chunk_id, score=0.0, rank=rank, method="rerank")
+            for rank, (chunk_id, _) in enumerate(candidates[:top_k], start=1)
+        ]
+
+
 def sessions_for(connection: AsyncConnection) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(
         bind=connection, class_=AsyncSession, join_transaction_mode="create_savepoint"
     )
 
 
-@pytest.fixture(params=["fts", "bm25", "dense_exact", "dense_hnsw", "hybrid"])
+@pytest.fixture(params=["fts", "bm25", "dense_exact", "dense_hnsw", "hybrid", "rerank"])
 def retriever(connection: AsyncConnection, request: pytest.FixtureRequest) -> Retriever:
     """Every test using this runs once per retrieval path."""
     sessions = sessions_for(connection)
-    builders: dict[str, Callable[[], Retriever]] = {
-        "fts": lambda: FtsRetriever(sessions),
-        "bm25": lambda: Bm25Retriever(sessions),
-        "dense_exact": lambda: DenseRetriever(sessions, FixedEmbedder(), "exact"),
-        "dense_hnsw": lambda: DenseRetriever(sessions, FixedEmbedder(), "hnsw"),
-        "hybrid": lambda: HybridRetriever(
+
+    def hybrid() -> HybridRetriever:
+        return HybridRetriever(
             Bm25Retriever(sessions),
             DenseRetriever(sessions, FixedEmbedder(), "exact"),
             k_bm25=50,
             k_dense=50,
             rrf_k=60,
             query_expansion=True,
-        ),
+        )
+
+    builders: dict[str, Callable[[], Retriever]] = {
+        "fts": lambda: FtsRetriever(sessions),
+        "bm25": lambda: Bm25Retriever(sessions),
+        "dense_exact": lambda: DenseRetriever(sessions, FixedEmbedder(), "exact"),
+        "dense_hnsw": lambda: DenseRetriever(sessions, FixedEmbedder(), "hnsw"),
+        "hybrid": hybrid,
+        "rerank": lambda: RerankRetriever(hybrid(), KeepOrderReranker(), sessions, top_n=50),
     }
     return builders[request.param]()
 
@@ -185,7 +203,7 @@ async def test_hits_are_ranked_and_respect_the_limit(
 ) -> None:
     hits = await retriever.search(SHARED_TERM, context=context(tenants.tenant_a), limit=1)
     assert [hit.rank for hit in hits] == [1]
-    assert hits[0].method in {"fts", "bm25", "dense_exact", "dense_hnsw", "hybrid"}
+    assert hits[0].method in {"fts", "bm25", "dense_exact", "dense_hnsw", "hybrid", "rerank"}
 
 
 @pytest.mark.parametrize("build", [fts_statement, bm25_statement], ids=["fts", "bm25"])
@@ -246,6 +264,27 @@ async def test_a_query_without_terms_finds_nothing(
     tenants: TwoTenants, lexical_retriever: Retriever, query: str
 ) -> None:
     assert await lexical_retriever.search(query, context=context(tenants.tenant_a), limit=50) == []
+
+
+async def test_explain_shows_the_acl_in_the_rerank_text_query(
+    connection: AsyncConnection, tenants: TwoTenants
+) -> None:
+    statement = chunk_texts_statement([uuid4()], context=context(tenants.tenant_a))
+    conditions = await conditions_in_plan(connection, statement)
+    assert "is_current" in conditions
+    assert "access_level" in conditions
+    assert str(tenants.tenant_a) in conditions
+
+
+async def test_rerank_text_query_refuses_another_tenants_chunk_by_id(
+    connection: AsyncConnection, tenants: TwoTenants
+) -> None:
+    """Even a candidate list holding a private id of tenant B returns no text for tenant A."""
+    chunk_ids = list(await connection.scalars(select(Chunk.id)))
+    statement = chunk_texts_statement(chunk_ids, context=context(tenants.tenant_a))
+    found = "\n".join(row.text for row in await connection.execute(statement))
+    assert CANARY_A in found
+    assert CANARY_B not in found
 
 
 @pytest.mark.parametrize("mode", ["exact", "hnsw"])

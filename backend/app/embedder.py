@@ -3,10 +3,12 @@
 import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
+from uuid import UUID
 
 import httpx
 
 from app.config import get_settings
+from app.retrieval.protocols import SearchHit
 
 EMBED_DIMENSIONS = 768  # chunks.embedding is vector(768)
 EMBED_BATCH = 8  # measured on the 8 GB dev machine: faster and lighter than 16 or 32
@@ -24,7 +26,7 @@ async def ping() -> None:
 
 
 class HttpEmbedder:
-    """The Embedder protocol over HTTP, plus token counting with the model's own tokenizer."""
+    """The Embedder and Reranker protocols over HTTP, plus token counting and the reranker name."""
 
     def __init__(
         self,
@@ -71,6 +73,30 @@ class HttpEmbedder:
             batch = texts[start : start + TOKENS_BATCH]
             counts += (await self._post("/tokens", {"texts": batch}))["counts"]
         return counts
+
+    async def rerank(
+        self, query: str, candidates: list[tuple[UUID, str]], top_k: int
+    ) -> list[SearchHit]:
+        """Return the best `top_k` by score; a tie goes to the lower chunk id."""
+        if not candidates:
+            return []
+        documents = [text for _, text in candidates]
+        scores = (await self._post("/rerank", {"query": query, "documents": documents}))["scores"]
+        if len(scores) != len(candidates):
+            raise ValueError(f"expected {len(candidates)} scores, got {len(scores)}")
+        pairs = zip((chunk_id for chunk_id, _ in candidates), scores, strict=True)
+        ordered = sorted(pairs, key=lambda pair: (-pair[1], pair[0]))[:top_k]
+        return [
+            SearchHit(chunk_id=chunk_id, score=score, rank=rank, method="rerank")
+            for rank, (chunk_id, score) in enumerate(ordered, start=1)
+        ]
+
+    async def rerank_model(self) -> str:
+        """Name the model the service is really running, so a report cannot name the wrong one."""
+        response = await self.client.get("/healthz")
+        response.raise_for_status()
+        model: str = response.json()["rerank_model"]
+        return model
 
 
 def http_embedder(client: httpx.AsyncClient | None = None) -> HttpEmbedder:

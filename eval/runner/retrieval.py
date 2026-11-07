@@ -1,4 +1,4 @@
-"""Retrieval eval: `python -m eval.runner.retrieval <set> <config|all>`, or `--check <set>`.
+"""Retrieval eval: `python -m eval.runner.retrieval <set> <config|all> [label]`, or `--check <set>`.
 
 Reports go to eval/reports/. Needs the stack and `make embedder`. No LLM is called.
 """
@@ -20,15 +20,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app import db
 from app.config import get_settings
-from app.embedder import http_embedder
+from app.embedder import HttpEmbedder, http_embedder
 from app.models import Chunk, Document, Tenant
 from app.retrieval.bm25 import Bm25Retriever
 from app.retrieval.config import RetrievalConfig
 from app.retrieval.dense import DenseRetriever
 from app.retrieval.fts import FtsRetriever
 from app.retrieval.hybrid import HybridRetriever
-from app.retrieval.protocols import Embedder, RetrievalContext, Retriever
+from app.retrieval.protocols import Embedder, Reranker, RetrievalContext, Retriever
 from app.retrieval.query_processing import expand_query
+from app.retrieval.rerank import RerankRetriever
 from eval.runner.anchors import holds_quote, same_passage
 from eval.runner.dataset import DATASETS, ROOT, EvalItem, load_items
 from eval.runner.metrics import (
@@ -45,7 +46,9 @@ from eval.runner.metrics import (
 REPORTS = ROOT / "eval" / "reports"
 LEVELS = frozenset({"public", "tenant_private"})
 METRICS = ("p_at_5", "recall_at_20", "mrr")
+RERANK_MAX_TOKENS = 512  # the tokenizer limit of the cross-encoder; longer input is cut off
 # The rows of docs/EVALUATION.md §3. The `_raw` configs measure what expansion adds.
+# Rerank builds on `hybrid_raw`; the run fills in the model the service reports.
 CONFIGS = {
     "fts": RetrievalConfig(method="fts", query_expansion=True),
     "bm25": RetrievalConfig(method="bm25", query_expansion=True),
@@ -55,6 +58,8 @@ CONFIGS = {
     "fts_raw": RetrievalConfig(method="fts"),
     "bm25_raw": RetrievalConfig(method="bm25"),
     "hybrid_raw": RetrievalConfig(method="hybrid", dense_mode="exact"),
+    "rerank_top20": RetrievalConfig(method="rerank", dense_mode="exact", rerank_top_n=20),
+    "rerank_top50": RetrievalConfig(method="rerank", dense_mode="exact", rerank_top_n=50),
 }
 
 
@@ -81,7 +86,10 @@ class ItemResult:
 
 
 def build_retriever(
-    config: RetrievalConfig, sessions: async_sessionmaker[AsyncSession], embedder: Embedder
+    config: RetrievalConfig,
+    sessions: async_sessionmaker[AsyncSession],
+    embedder: Embedder,
+    reranker: Reranker | None = None,
 ) -> Retriever:
     if config.method == "fts":
         return FtsRetriever(sessions)
@@ -91,7 +99,7 @@ def build_retriever(
     dense = DenseRetriever(sessions, embedder, config.dense_mode)
     if config.method == "dense":
         return dense
-    return HybridRetriever(
+    hybrid = HybridRetriever(
         Bm25Retriever(sessions),
         dense,
         k_bm25=config.k_bm25,
@@ -99,6 +107,10 @@ def build_retriever(
         rrf_k=config.rrf_k,
         query_expansion=config.query_expansion,
     )
+    if config.method == "hybrid":
+        return hybrid
+    assert reranker is not None and config.rerank_top_n is not None
+    return RerankRetriever(hybrid, reranker, sessions, top_n=config.rerank_top_n)
 
 
 async def load_corpus(sessions: async_sessionmaker[AsyncSession]) -> dict[UUID, CorpusChunk]:
@@ -146,7 +158,7 @@ async def run_item(
     corpus: dict[UUID, CorpusChunk],
 ) -> ItemResult:
     # Hybrid expands inside the retriever, because only its BM25 input may change.
-    expand = config.query_expansion and config.method != "hybrid"
+    expand = config.query_expansion and config.method not in ("hybrid", "rerank")
     query = expand_query(item.query) if expand else item.query
     context = RetrievalContext(uuid4(), tenant_id, LEVELS)
     started = time.perf_counter()
@@ -285,6 +297,15 @@ def render_comparison(reports: list[dict[str, object]], hnsw: dict[str, float]) 
         rows: list[tuple[str, object]] = [(f"real / {k}", v) for k, v in by_category.items()]
         rows.append(("synthetic", report["synthetic"]))
         lines += [f"### {report['config_name']}", "", *table(rows), ""]
+    lines += ["## Reranking", ""]
+    lines += ["- `rerank_top20` only reorders the `hybrid_raw` top 20, so its Recall@20 equals"]
+    lines += ["  that row by construction. `rerank_top50` can bring in other chunks."]
+    lines += ["- Rows return 20 results so all metrics stay comparable; generation keeps fewer."]
+    lines += [
+        f"- Chunks over {RERANK_MAX_TOKENS} tokens, counted with the embedding tokenizer: "
+        f"{reports[0]['chunks_over_rerank_limit']}. The cross-encoder cuts off the end of these.",
+        "",
+    ]
     lines += [f"## HNSW recall@{K} against exact search", ""]
     lines += ["The HNSW row is forced per transaction, not what the planner would pick here.", ""]
     lines += [f"- {group}: {value:.4f}" for group, value in hnsw.items()]
@@ -311,6 +332,24 @@ async def corpus_summary(sessions: async_sessionmaker[AsyncSession]) -> str:
         )
         documents = await session.scalar(select(func.count()).select_from(Document))
     return f"{documents} documents, {chunks} chunks, {get_settings().embed_model}"
+
+
+async def chunks_over_rerank_limit(sessions: async_sessionmaker[AsyncSession]) -> int:
+    statement = (
+        select(func.count())
+        .select_from(Chunk)
+        .where(Chunk.is_current, Chunk.token_count > RERANK_MAX_TOKENS)
+    )
+    async with sessions() as session:
+        return await session.scalar(statement) or 0
+
+
+async def resolve_config(name: str, embedder: HttpEmbedder) -> RetrievalConfig:
+    """Record the model the service runs, so the report and its config hash name the real one."""
+    config = CONFIGS[name]
+    if config.method != "rerank":
+        return config
+    return config.model_copy(update={"rerank_model": await embedder.rerank_model()})
 
 
 def check(items: list[EvalItem], corpus: dict[UUID, CorpusChunk]) -> list[str]:
@@ -348,7 +387,10 @@ async def hnsw_recall(
     }
 
 
-async def evaluate(set_name: str, config_name: str) -> None:
+async def evaluate(set_name: str, config_name: str, label: str | None = None) -> None:
+    """Run one config or `all`. `label` keeps an experiment's report apart from the main row."""
+    if label and config_name == "all":
+        sys.exit("a label needs a single config")
     path = DATASETS / f"{set_name}.jsonl"
     require_committed(path)
     items = load_items(path)
@@ -360,6 +402,9 @@ async def evaluate(set_name: str, config_name: str) -> None:
         sys.exit("\n".join(problems))
     tenants = await tenant_ids(sessions)
     await embedder.embed_query("warm up")  # the first call loads the model
+    names = list(CONFIGS) if config_name == "all" else [config_name]
+    if any(CONFIGS[name].method == "rerank" for name in names):
+        await embedder.rerank("warm up", [(uuid4(), "warm up")], 1)
     today = date.today().isoformat()
     meta: dict[str, object] = {
         "set": set_name,
@@ -368,17 +413,18 @@ async def evaluate(set_name: str, config_name: str) -> None:
         "git_sha": git_sha(),
         "corpus": await corpus_summary(sessions),
         "labels": "drafted by Claude (an AI model), reviewed item by item by Vinh",
+        "chunks_over_rerank_limit": await chunks_over_rerank_limit(sessions),
     }
     REPORTS.mkdir(exist_ok=True)
-    names = list(CONFIGS) if config_name == "all" else [config_name]
     reports = []
-    for name in names:
-        config = CONFIGS[name]
-        retriever = build_retriever(config, sessions, embedder)
+    for config_key in names:
+        config = await resolve_config(config_key, embedder)
+        retriever = build_retriever(config, sessions, embedder, embedder)
         results = [
             await run_item(item, config, retriever, tenants[item.ask_as_tenant], corpus)
             for item in items
         ]
+        name = f"{config_key}_{label}" if label else config_key
         report = build_report(name, config, results, meta)
         reports.append(report)
         stem = REPORTS / f"{today}_{set_name}_{name}"
@@ -407,7 +453,7 @@ def main() -> None:
     if args[0] == "--check":
         asyncio.run(run_check(args[1]))
     else:
-        asyncio.run(evaluate(args[0], args[1]))
+        asyncio.run(evaluate(*args[:3]))
 
 
 if __name__ == "__main__":

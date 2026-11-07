@@ -2,6 +2,7 @@
 
 import json
 from collections.abc import Callable
+from uuid import UUID
 
 import httpx
 import pytest
@@ -25,6 +26,62 @@ def client_for(handler: Handler, sleeps: list[float] | None = None) -> HttpEmbed
 def embed_ok(request: httpx.Request) -> httpx.Response:
     texts = json.loads(request.content)["texts"]
     return httpx.Response(200, json={"embeddings": [VECTOR for _ in texts]})
+
+
+def scores_ok(*scores: float) -> Handler:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/rerank"
+        return httpx.Response(200, json={"scores": list(scores)})
+
+    return handler
+
+
+LOW = UUID(int=1)
+HIGH = UUID(int=2)
+CANDIDATES = [(LOW, "low id"), (HIGH, "high id")]
+
+
+async def test_rerank_orders_by_score_and_applies_top_k() -> None:
+    hits = await client_for(scores_ok(0.1, 0.9)).rerank("query", CANDIDATES, 1)
+    assert [(hit.chunk_id, hit.score, hit.rank, hit.method) for hit in hits] == [
+        (HIGH, 0.9, 1, "rerank")
+    ]
+
+
+async def test_rerank_sends_documents_in_candidate_order() -> None:
+    sent: list[dict[str, object]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent.append(json.loads(request.content))
+        return httpx.Response(200, json={"scores": [0.1, 0.2]})
+
+    await client_for(handler).rerank("query", CANDIDATES, 2)
+    assert sent == [{"query": "query", "documents": ["low id", "high id"]}]
+
+
+async def test_rerank_tie_goes_to_the_lower_chunk_id() -> None:
+    hits = await client_for(scores_ok(0.5, 0.5)).rerank("query", CANDIDATES[::-1], 2)
+    assert [hit.chunk_id for hit in hits] == [LOW, HIGH]
+
+
+async def test_rerank_without_candidates_sends_no_request() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("no request expected")
+
+    assert await client_for(handler).rerank("query", [], 5) == []
+
+
+async def test_rerank_rejects_a_wrong_score_count() -> None:
+    with pytest.raises(ValueError, match="expected 2 scores"):
+        await client_for(scores_ok(0.5)).rerank("query", CANDIDATES, 2)
+
+
+async def test_rerank_model_comes_from_the_service() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/healthz"
+        return httpx.Response(200, json={"status": "ok", "rerank_model": "some/model"})
+
+    assert await client_for(handler).rerank_model() == "some/model"
 
 
 async def test_documents_are_sent_in_batches_and_keep_their_order() -> None:

@@ -9,16 +9,21 @@ from app.retrieval.dense import DenseMode
 
 
 class RetrievalConfig(BaseModel):
-    """Grows with the methods. `k_bm25`, `k_dense` and `rrf_k` apply to hybrid only."""
+    """Grows with the methods. `k_bm25`, `k_dense` and `rrf_k` apply to hybrid and rerank.
+
+    `rerank_model` records the model the embedder service reported for the run.
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    method: Literal["fts", "bm25", "dense", "hybrid"]
+    method: Literal["fts", "bm25", "dense", "hybrid", "rerank"]
     dense_mode: DenseMode | None = None
     query_expansion: bool = False
     k_bm25: int = 50
     k_dense: int = 50
     rrf_k: int = 60
+    rerank_model: str | None = None
+    rerank_top_n: int | None = None
 
     def config_hash(self) -> str:
         return hashlib.sha256(self.model_dump_json().encode()).hexdigest()[:12]
