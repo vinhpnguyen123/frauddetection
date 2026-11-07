@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     storage_dir: Path = ROOT / "storage"  # compose points the worker at its mounted copy
     seed_password: SecretStr | None = None  # dev only, read by scripts/seed.py
     download_contact_email: str | None = None  # dev only, read by scripts/download.py
+    embed_model: str | None = None  # the embedder owns it; eval reports only record it
 
 
 @lru_cache
