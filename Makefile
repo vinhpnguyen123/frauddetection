@@ -1,4 +1,4 @@
-.PHONY: up down migrate seed embedder download synthetic parse-report ingest corpus-stats eval-check eval-retrieval hnsw-recall lint test
+.PHONY: up down migrate seed embedder download synthetic parse-report ingest corpus-stats eval-check eval-retrieval hnsw-recall chunk-experiment lint test
 
 up:
 	docker compose up -d --build --wait
@@ -33,6 +33,10 @@ eval-retrieval:
 
 hnsw-recall:
 	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/hnsw_recall.py ../eval/datasets/$(SET).jsonl
+
+# ACTION=verify, ACTION=run VARIANT=<name>, or ACTION=report. Never writes to the main database.
+chunk-experiment:
+	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/chunk_experiment.py $(ACTION) $(VARIANT)
 
 corpus-stats:
 	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/corpus_stats.py

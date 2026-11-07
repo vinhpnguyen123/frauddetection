@@ -5,14 +5,15 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import Select, func, select, text
+from sqlalchemy import Select, func, insert, select, text, update
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, async_sessionmaker
 
-from app.models import Chunk
+from app.models import Chunk, Section
 from app.retrieval.bm25 import Bm25Retriever, bm25_statement
 from app.retrieval.dense import MODE_SETTINGS, DenseMode, DenseRetriever, dense_statement
 from app.retrieval.fts import FtsRetriever, fts_statement
 from app.retrieval.hybrid import HybridRetriever
+from app.retrieval.parent import parent_sections, parent_sections_statement
 from app.retrieval.protocols import RetrievalContext, Retriever, SearchHit
 from app.retrieval.rerank import RerankRetriever, chunk_texts_statement
 from tests.fixtures.plans import explain
@@ -285,6 +286,53 @@ async def test_rerank_text_query_refuses_another_tenants_chunk_by_id(
     found = "\n".join(row.text for row in await connection.execute(statement))
     assert CANARY_A in found
     assert CANARY_B not in found
+
+
+async def add_sections(connection: AsyncConnection) -> list[UUID]:
+    """Give every fixture chunk a section that repeats its text, and return the chunk ids."""
+    chunks = (await connection.execute(select(Chunk.id, Chunk.version_id, Chunk.text))).all()
+    for chunk in chunks:
+        section_id = await connection.scalar(
+            insert(Section)
+            .values(
+                version_id=chunk.version_id,
+                path="Path",
+                text=f"section: {chunk.text}",
+                page_start=1,
+                page_end=1,
+                ordinal=0,
+            )
+            .returning(Section.id)
+        )
+        await connection.execute(
+            update(Chunk).where(Chunk.id == chunk.id).values(section_id=section_id)
+        )
+    return [chunk.id for chunk in chunks]
+
+
+async def test_parent_sections_never_reach_another_tenant(
+    connection: AsyncConnection, tenants: TwoTenants
+) -> None:
+    """Even asked by id: `sections` has no ACL columns, so only the chunk join protects it."""
+    chunk_ids = await add_sections(connection)
+    sessions = sessions_for(connection)
+    found = await parent_sections(sessions, chunk_ids, context=context(tenants.tenant_a))
+    joined = "\n".join(found.values())
+    assert len(found) == 2
+    assert f"section: {SHARED_TERM} review policy ref {CANARY_A}" in joined
+    assert PUBLIC_TEXT in joined
+    assert CANARY_B not in joined
+    assert STALE_TEXT not in joined
+
+
+async def test_explain_shows_the_acl_in_the_parent_section_query(
+    connection: AsyncConnection, tenants: TwoTenants
+) -> None:
+    statement = parent_sections_statement([uuid4()], context=context(tenants.tenant_a))
+    conditions = await conditions_in_plan(connection, statement)
+    assert "is_current" in conditions
+    assert "access_level" in conditions
+    assert str(tenants.tenant_a) in conditions
 
 
 @pytest.mark.parametrize("mode", ["exact", "hnsw"])

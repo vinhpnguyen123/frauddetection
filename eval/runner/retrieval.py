@@ -46,6 +46,7 @@ from eval.runner.metrics import (
 REPORTS = ROOT / "eval" / "reports"
 LEVELS = frozenset({"public", "tenant_private"})
 METRICS = ("p_at_5", "recall_at_20", "mrr")
+ALLOW_UNMATCHED = "--allow-unmatched"
 RERANK_MAX_TOKENS = 512  # the tokenizer limit of the cross-encoder; longer input is cut off
 # The rows of docs/EVALUATION.md §3. The `_raw` configs measure what expansion adds.
 # Rerank builds on `hybrid_raw`; the run fills in the model the service reports.
@@ -352,17 +353,38 @@ async def resolve_config(name: str, embedder: HttpEmbedder) -> RetrievalConfig:
     return config.model_copy(update={"rerank_model": await embedder.rerank_model()})
 
 
+def unmatched_anchors(items: list[EvalItem], corpus: dict[UUID, CorpusChunk]) -> list[str]:
+    """One problem per anchor that matches no chunk."""
+    return [
+        f"{item.id}: no chunk of {anchor.doc_id} holds: {anchor.quote}"
+        for item in items
+        for anchor, chunks in zip(item.relevant, anchor_chunks(item, corpus), strict=True)
+        if not chunks
+    ]
+
+
+def duplicate_passages(items: list[EvalItem]) -> list[str]:
+    """One problem per anchor pair repeating a passage: Recall would count it twice."""
+    return [
+        f"{item.id}: same passage twice in {first.doc_id}: {first.quote}"
+        for item in items
+        for first, second in combinations(item.relevant, 2)
+        if first.doc_id == second.doc_id and same_passage(first.quote, second.quote)
+    ]
+
+
 def check(items: list[EvalItem], corpus: dict[UUID, CorpusChunk]) -> list[str]:
-    """Return one problem per anchor that matches no chunk, or repeats a passage of its item."""
-    problems = []
-    for item in items:
-        for anchor, chunks in zip(item.relevant, anchor_chunks(item, corpus), strict=True):
-            if not chunks:
-                problems.append(f"{item.id}: no chunk of {anchor.doc_id} holds: {anchor.quote}")
-        for first, second in combinations(item.relevant, 2):
-            if first.doc_id == second.doc_id and same_passage(first.quote, second.quote):
-                problems.append(f"{item.id}: same passage twice in {first.doc_id}: {first.quote}")
-    return problems
+    return unmatched_anchors(items, corpus) + duplicate_passages(items)
+
+
+def blocking_problems(
+    items: list[EvalItem], corpus: dict[UUID, CorpusChunk], *, allow_unmatched: bool
+) -> list[str]:
+    """What stops a run. Only a chunking experiment may lose an anchor: other boundaries can split
+    a quote too evenly to match, and it then counts as a miss. Duplicates always stop a run."""
+    if allow_unmatched:
+        return duplicate_passages(items)
+    return check(items, corpus)
 
 
 async def tenant_ids(sessions: async_sessionmaker[AsyncSession]) -> dict[str, UUID]:
@@ -387,7 +409,9 @@ async def hnsw_recall(
     }
 
 
-async def evaluate(set_name: str, config_name: str, label: str | None = None) -> None:
+async def evaluate(
+    set_name: str, config_name: str, label: str | None = None, *, allow_unmatched: bool = False
+) -> None:
     """Run one config or `all`. `label` keeps an experiment's report apart from the main row."""
     if label and config_name == "all":
         sys.exit("a label needs a single config")
@@ -397,7 +421,7 @@ async def evaluate(set_name: str, config_name: str, label: str | None = None) ->
     sessions = db.get_sessionmaker()
     embedder = http_embedder()
     corpus = await load_corpus(sessions)
-    problems = check(items, corpus)
+    problems = blocking_problems(items, corpus, allow_unmatched=allow_unmatched)
     if problems:
         sys.exit("\n".join(problems))
     tenants = await tenant_ids(sessions)
@@ -414,6 +438,7 @@ async def evaluate(set_name: str, config_name: str, label: str | None = None) ->
         "corpus": await corpus_summary(sessions),
         "labels": "drafted by Claude (an AI model), reviewed item by item by Vinh",
         "chunks_over_rerank_limit": await chunks_over_rerank_limit(sessions),
+        "unmatched_anchors": len(unmatched_anchors(items, corpus)),
     }
     REPORTS.mkdir(exist_ok=True)
     reports = []
@@ -449,11 +474,11 @@ async def run_check(set_name: str) -> None:
 
 
 def main() -> None:
-    args = sys.argv[1:]
+    args = [arg for arg in sys.argv[1:] if arg != ALLOW_UNMATCHED]
     if args[0] == "--check":
         asyncio.run(run_check(args[1]))
     else:
-        asyncio.run(evaluate(*args[:3]))
+        asyncio.run(evaluate(*args[:3], allow_unmatched=ALLOW_UNMATCHED in sys.argv))
 
 
 if __name__ == "__main__":

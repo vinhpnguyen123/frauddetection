@@ -6,6 +6,7 @@ import pytest
 from eval.runner.dataset import EvalItem
 from eval.runner.retrieval import (
     CONFIGS,
+    blocking_problems,
     build_report,
     build_retriever,
     check,
@@ -34,6 +35,7 @@ META: dict[str, object] = {
     "corpus": "fixture",
     "labels": "fixture",
     "chunks_over_rerank_limit": 0,
+    "unmatched_anchors": 0,
 }
 
 
@@ -132,6 +134,24 @@ async def test_a_rerank_config_records_the_model_the_service_runs() -> None:
 
 async def test_other_configs_never_ask_for_a_rerank_model() -> None:
     assert await resolve_config("bm25", None) is CONFIGS["bm25"]  # type: ignore[arg-type]
+
+
+def test_a_duplicate_passage_stops_even_a_chunking_experiment() -> None:
+    quote = "the same passage quoted twice by one item, long enough to count as the same passage"
+    anchor = {"doc_id": "public", "page": 1, "quote": quote}
+    twice = item("dev-001", relevant=[anchor, anchor])
+    assert len(blocking_problems([twice], {}, allow_unmatched=True)) == 1
+
+
+async def test_only_a_chunking_experiment_may_lose_an_anchor(connection: AsyncConnection) -> None:
+    await create_two_tenants(connection)
+    sessions = async_sessionmaker(
+        bind=connection, class_=AsyncSession, join_transaction_mode="create_savepoint"
+    )
+    corpus = await load_corpus(sessions)
+    lost = item("dev-001", relevant=[{"doc_id": "public", "page": 1, "quote": "not in it"}])
+    assert blocking_problems([lost], corpus, allow_unmatched=True) == []
+    assert len(blocking_problems([lost], corpus, allow_unmatched=False)) == 1
 
 
 async def test_a_quote_the_corpus_lacks_is_reported(connection: AsyncConnection) -> None:

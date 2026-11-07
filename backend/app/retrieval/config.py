@@ -24,6 +24,7 @@ class RetrievalConfig(BaseModel):
     rrf_k: int = 60
     rerank_model: str | None = None
     rerank_top_n: int | None = None
+    parent_expansion: bool = False  # read by generation from M5-S2; ranking does not change
 
     def config_hash(self) -> str:
         return hashlib.sha256(self.model_dump_json().encode()).hexdigest()[:12]
