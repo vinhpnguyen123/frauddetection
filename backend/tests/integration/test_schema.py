@@ -39,6 +39,7 @@ INDEXES = {
     "dv_one_current",
     "saved_answers_owner",
     "chunks_acl",
+    "chunks_bm25",
     "chunks_embedding_hnsw",
     "chunks_fts",
 }
