@@ -3,13 +3,15 @@
 Reports go to eval/reports/. Needs the stack and `make embedder`. No LLM is called.
 """
 
+import argparse
 import asyncio
+import hashlib
 import json
 import subprocess
 import sys
 import time
 from dataclasses import asdict, dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from itertools import combinations
 from pathlib import Path
 from uuid import UUID, uuid4
@@ -31,7 +33,7 @@ from app.retrieval.protocols import Embedder, Reranker, RetrievalContext, Retrie
 from app.retrieval.query_processing import expand_query
 from app.retrieval.rerank import RerankRetriever
 from eval.runner.anchors import holds_quote, same_passage
-from eval.runner.dataset import DATASETS, ROOT, EvalItem, load_items
+from eval.runner.dataset import DATASETS, ROOT, EvalItem, load_items, load_provenance
 from eval.runner.metrics import (
     RECALL_AT,
     bootstrap_ci,
@@ -62,6 +64,15 @@ CONFIGS = {
     "rerank_top20": RetrievalConfig(method="rerank", dense_mode="exact", rerank_top_n=20),
     "rerank_top50": RetrievalConfig(method="rerank", dense_mode="exact", rerank_top_n=50),
 }
+COMPARISON_CONFIGS = (
+    "fts",
+    "bm25",
+    "dense_exact",
+    "dense_hnsw",
+    "hybrid_raw",
+    "rerank_top20",
+    "rerank_top50",
+)
 
 
 @dataclass(frozen=True)
@@ -255,11 +266,16 @@ def table(rows: list[tuple[str, object]]) -> list[str]:
 
 
 def header(report: dict[str, object]) -> list[str]:
+    dataset_hash = report.get("dataset_sha256", "not recorded in this historical report")
     return [
         f"- Set: `{report['set']}` ({report['set_size']} items), date {report['date']}",
         f"- Git SHA: `{report['git_sha']}`",
         f"- Corpus: {report['corpus']}",
         f"- Labels: {report['labels']}",
+        f"- Dataset SHA-256: `{dataset_hash}`",
+        f"- Working tree dirty: {report.get('working_tree_dirty', 'not recorded')}; "
+        f"pre-commit labels allowed: {report.get('allow_uncommitted_labels', False)}",
+        f"- Input fingerprint: `{report.get('input_sha256', 'not recorded')}`",
         "- Metrics use answerable items; the headline rows use `real` items only.",
         "- P@5 ceiling: the best P@5 the labels allow, since few chunks may be relevant.",
     ]
@@ -283,7 +299,16 @@ def render_comparison(reports: list[dict[str, object]], hnsw: dict[str, float]) 
     lines += ["## real items", ""]
     lines += ["| Config | P@5 (95% CI) | Recall@20 (95% CI) | MRR (95% CI) | p50/p95 ms |"]
     lines += ["|---|---|---|---|---|"]
-    for report in reports:
+    primary = [
+        r
+        for name in COMPARISON_CONFIGS
+        for r in reports
+        if r.get("config_key", r["config_name"]) == name
+    ]
+    experiments = [
+        r for r in reports if r.get("config_key", r["config_name"]) not in COMPARISON_CONFIGS
+    ]
+    for report in primary:
         latency = report["latency_ms"]
         assert isinstance(latency, dict)
         lines.append(
@@ -291,6 +316,22 @@ def render_comparison(reports: list[dict[str, object]], hnsw: dict[str, float]) 
             f"| {cell(report['real'], 'recall_at_20')} | {cell(report['real'], 'mrr')} "
             f"| {latency['p50']:.1f} / {latency['p95']:.1f} |"
         )
+    if experiments:
+        lines += [
+            "",
+            "## Query expansion experiments (outside the seven main rows)",
+            "",
+        ]
+        lines += ["| Config | P@5 (95% CI) | Recall@20 (95% CI) | MRR (95% CI) | p50/p95 ms |"]
+        lines += ["|---|---|---|---|---|"]
+        for report in experiments:
+            latency = report["latency_ms"]
+            assert isinstance(latency, dict)
+            lines.append(
+                f"| {report['config_name']} | {cell(report['real'], 'p_at_5')} "
+                f"| {cell(report['real'], 'recall_at_20')} | {cell(report['real'], 'mrr')} "
+                f"| {latency['p50']:.1f} / {latency['p95']:.1f} |"
+            )
     lines += ["", "## By group, P@5 / Recall@20 / MRR means", ""]
     for report in reports:
         by_category = report["real_by_category"]
@@ -324,6 +365,30 @@ def require_committed(path: Path) -> None:
     command = ["git", "status", "--porcelain", "--", str(path)]
     if subprocess.check_output(command, cwd=ROOT, text=True).strip():
         sys.exit(f"{path.name} has uncommitted changes: commit the labels before an eval run")
+
+
+def input_fingerprint(path: Path, *, allow_uncommitted_labels: bool = False) -> dict[str, object]:
+    """Keep the normal commit gate; explicitly authorized pre-commit runs record their bytes."""
+    if not allow_uncommitted_labels:
+        require_committed(path)
+        require_committed(path.with_suffix(".meta.json"))
+    paths = {path, path.with_suffix(".meta.json")}
+    for folder in ("backend/app", "eval/runner", "scripts"):
+        paths.update((ROOT / folder).rglob("*.py"))
+    paths.update((ROOT / "embedder").glob("*.py"))
+    for folder in ("backend", "embedder"):
+        paths.update(ROOT / folder / name for name in ("pyproject.toml", "uv.lock"))
+    hashes = {
+        str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths)
+    }
+    digest = hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest()
+    dirty = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)
+    return {
+        "allow_uncommitted_labels": allow_uncommitted_labels,
+        "working_tree_dirty": bool(dirty.strip()),
+        "input_sha256": digest,
+        "input_files_sha256": hashes,
+    }
 
 
 async def corpus_summary(sessions: async_sessionmaker[AsyncSession]) -> str:
@@ -410,13 +475,17 @@ async def hnsw_recall(
 
 
 async def evaluate(
-    set_name: str, config_name: str, label: str | None = None, *, allow_unmatched: bool = False
+    set_name: str,
+    config_name: str,
+    label: str | None = None,
+    *,
+    allow_unmatched: bool = False,
+    allow_uncommitted_labels: bool = False,
 ) -> None:
     """Run one config or `all`. `label` keeps an experiment's report apart from the main row."""
-    if label and config_name == "all":
-        sys.exit("a label needs a single config")
     path = DATASETS / f"{set_name}.jsonl"
-    require_committed(path)
+    fingerprint = input_fingerprint(path, allow_uncommitted_labels=allow_uncommitted_labels)
+    provenance = load_provenance(path)
     items = load_items(path)
     sessions = db.get_sessionmaker()
     embedder = http_embedder()
@@ -436,7 +505,9 @@ async def evaluate(
         "date": today,
         "git_sha": git_sha(),
         "corpus": await corpus_summary(sessions),
-        "labels": "drafted by Claude (an AI model), reviewed item by item by Vinh",
+        "labels": provenance.description(),
+        "dataset_sha256": provenance.dataset_sha256,
+        **fingerprint,
         "chunks_over_rerank_limit": await chunks_over_rerank_limit(sessions),
         "unmatched_anchors": len(unmatched_anchors(items, corpus)),
     }
@@ -445,12 +516,21 @@ async def evaluate(
     for config_key in names:
         config = await resolve_config(config_key, embedder)
         retriever = build_retriever(config, sessions, embedder, embedder)
+        started_at = datetime.now(UTC).isoformat()
         results = [
             await run_item(item, config, retriever, tenants[item.ask_as_tenant], corpus)
             for item in items
         ]
         name = f"{config_key}_{label}" if label else config_key
         report = build_report(name, config, results, meta)
+        report["config_key"] = config_key
+        report["started_at_utc"] = started_at
+        report["finished_at_utc"] = datetime.now(UTC).isoformat()
+        if (
+            input_fingerprint(path, allow_uncommitted_labels=True)["input_sha256"]
+            != fingerprint["input_sha256"]
+        ):
+            sys.exit("evaluation inputs changed during the run; refusing to write a report")
         reports.append(report)
         stem = REPORTS / f"{today}_{set_name}_{name}"
         stem.with_suffix(".json").write_text(json.dumps(report, indent=2) + "\n")
@@ -459,14 +539,17 @@ async def evaluate(
     if config_name == "all":
         hnsw = await hnsw_recall(items, sessions, embedder)
         comparison = render_comparison(reports, hnsw)
-        (REPORTS / f"{today}_{set_name}_comparison.md").write_text(comparison)
+        suffix = f"_{label}" if label else ""
+        (REPORTS / f"{today}_{set_name}_comparison{suffix}.md").write_text(comparison)
     leaks = [leak for report in reports for leak in report["leaks"]]  # type: ignore[attr-defined]
     if leaks:
         sys.exit("cross-tenant leak:\n" + "\n".join(leaks))
 
 
 async def run_check(set_name: str) -> None:
-    items = load_items(DATASETS / f"{set_name}.jsonl")
+    path = DATASETS / f"{set_name}.jsonl"
+    load_provenance(path)
+    items = load_items(path)
     problems = check(items, await load_corpus(db.get_sessionmaker()))
     print("\n".join(problems) or f"{len(items)} items, every anchor matches a chunk")
     if problems:
@@ -474,11 +557,32 @@ async def run_check(set_name: str) -> None:
 
 
 def main() -> None:
-    args = [arg for arg in sys.argv[1:] if arg != ALLOW_UNMATCHED]
-    if args[0] == "--check":
-        asyncio.run(run_check(args[1]))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("set", nargs="?")
+    parser.add_argument("config", nargs="?", choices=[*CONFIGS, "all"])
+    parser.add_argument("label", nargs="?")
+    parser.add_argument("--check", metavar="SET")
+    parser.add_argument(ALLOW_UNMATCHED, action="store_true")
+    parser.add_argument(
+        "--allow-uncommitted-labels",
+        action="store_true",
+        help="Explicit pre-commit run; reports record dirty state and input hashes",
+    )
+    args = parser.parse_args()
+    if args.check:
+        asyncio.run(run_check(args.check))
     else:
-        asyncio.run(evaluate(*args[:3], allow_unmatched=ALLOW_UNMATCHED in sys.argv))
+        if not args.set or not args.config:
+            parser.error("provide a set and config, or --check SET")
+        asyncio.run(
+            evaluate(
+                args.set,
+                args.config,
+                args.label,
+                allow_unmatched=args.allow_unmatched,
+                allow_uncommitted_labels=args.allow_uncommitted_labels,
+            )
+        )
 
 
 if __name__ == "__main__":

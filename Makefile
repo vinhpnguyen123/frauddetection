@@ -29,7 +29,7 @@ eval-check:
 
 CONFIG ?= all
 eval-retrieval:
-	cd backend && PYTHONPATH=.:.. uv run --locked python -m eval.runner.retrieval $(SET) $(CONFIG) $(LABEL)
+	cd backend && PYTHONPATH=.:.. uv run --locked python -m eval.runner.retrieval $(SET) $(CONFIG) $(LABEL) $(EVAL_FLAGS)
 
 hnsw-recall:
 	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/hnsw_recall.py ../eval/datasets/$(SET).jsonl
