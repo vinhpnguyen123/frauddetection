@@ -7,7 +7,8 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Repo-root .env for local runs. Containers get real env vars and have no such file.
-ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+ROOT = Path(__file__).resolve().parents[2]
+ENV_FILE = ROOT / ".env"
 
 
 class Settings(BaseSettings):
@@ -18,6 +19,7 @@ class Settings(BaseSettings):
     database_url: str
     redis_url: str
     embedder_url: str
+    storage_dir: Path = ROOT / "storage"  # compose points the worker at its mounted copy
     seed_password: SecretStr | None = None  # dev only, read by scripts/seed.py
     download_contact_email: str | None = None  # dev only, read by scripts/download.py
 
