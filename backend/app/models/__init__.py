@@ -34,6 +34,7 @@ JobStatus = ENUM("pending", "running", "succeeded", "failed", name="job_status",
 JobSource = ENUM("manifest", "upload", name="job_source", create_type=False)
 
 Timestamp = TIMESTAMP(timezone=True)
+BM25_TOKENIZER = "pdb.unicode_words('stemmer=english', 'stopwords_language=English')"
 ACL_SHAPE = (
     "(access_level = 'public' AND tenant_id IS NULL) OR "
     "(access_level = 'tenant_private' AND tenant_id IS NOT NULL)"
@@ -155,6 +156,13 @@ class Chunk(Base):
             postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
         Index("chunks_fts", "fts", postgresql_using="gin"),
+        Index(
+            "chunks_bm25",
+            "id",
+            text(f"(text::{BM25_TOKENIZER})"),
+            text(f"(section_path::{BM25_TOKENIZER})"),
+            postgresql_using="paradedb",
+        ),
     )
 
     id: Mapped[UUID] = primary_key()

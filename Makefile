@@ -1,4 +1,4 @@
-.PHONY: up down migrate seed embedder download synthetic parse-report ingest corpus-stats lint test
+.PHONY: up down migrate seed embedder download synthetic parse-report ingest corpus-stats eval-check eval-retrieval hnsw-recall lint test
 
 up:
 	docker compose up -d --build --wait
@@ -24,6 +24,16 @@ parse-report:
 ingest:
 	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/ingest.py
 
+eval-check:
+	cd backend && PYTHONPATH=.:.. uv run --locked python -m eval.runner.retrieval --check $(SET)
+
+CONFIG ?= all
+eval-retrieval:
+	cd backend && PYTHONPATH=.:.. uv run --locked python -m eval.runner.retrieval $(SET) $(CONFIG)
+
+hnsw-recall:
+	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/hnsw_recall.py ../eval/datasets/$(SET).jsonl
+
 corpus-stats:
 	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/corpus_stats.py
 
@@ -32,8 +42,8 @@ seed:
 
 # --locked fails if uv.lock is out of date with pyproject.toml.
 lint:
-	cd backend && uv run --locked ruff check --config pyproject.toml . ../scripts
-	cd backend && uv run --locked ruff format --check --config pyproject.toml . ../scripts
+	cd backend && uv run --locked ruff check --config pyproject.toml . ../scripts ../eval
+	cd backend && uv run --locked ruff format --check --config pyproject.toml . ../scripts ../eval
 	cd backend && uv run --locked mypy app
 	cd embedder && uv run --locked ruff check .
 	cd embedder && uv run --locked ruff format --check .
