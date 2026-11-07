@@ -57,6 +57,10 @@ class Block:
     bbox: BBox
     text: str
     kind: Literal["body", "footnote"]
+    marks: tuple[str, ...] = ()  # body: the footnotes it refers to
+    # Footnote: the page it starts on and its number, because numbering can restart on a page.
+    # A continuation on the next page keeps the key of the note it continues.
+    note_key: tuple[int, str] | None = None
 
 
 @dataclass(frozen=True)
@@ -270,16 +274,24 @@ def style_of(heading: Line) -> tuple[int, bool]:
     return round(heading.size), heading.bold
 
 
+def continues_sentence(left: str, right: str) -> bool:
+    """True when a page or column break cut one sentence into these two texts."""
+    return left[-1] not in SENTENCE_END and right[0].islower()
+
+
+def join_blocks(left: str, right: str) -> str:
+    """Rejoin a sentence cut in two; otherwise start a new paragraph."""
+    if not left:
+        return right
+    if continues_sentence(left, right):
+        return join_lines(left, right)
+    return f"{left}\n\n{right}"
+
+
 def join_body(blocks: list[Block]) -> str:
-    """Rejoin a sentence that a page or column break cut in two."""
     text = ""
     for block in blocks:
-        if not text:
-            text = block.text
-        elif text[-1] not in SENTENCE_END and block.text[0].islower():
-            text = join_lines(text, block.text)
-        else:
-            text = f"{text}\n\n{block.text}"
+        text = join_blocks(text, block.text)
     return text
 
 
@@ -322,7 +334,7 @@ class SectionBuilder:
         self.claim(line)
 
     def add_body(self, line: Line) -> None:
-        self.current.body.append(Block(line.page, line.bbox, line.text, "body"))
+        self.current.body.append(Block(line.page, line.bbox, line.text, "body", marks=line.marks))
         self.claim(line)
 
     def continues_note(self, number: str | None, line: Line) -> bool:
@@ -335,12 +347,14 @@ class SectionBuilder:
         return line.text[0].islower() or last.text[-1] not in SENTENCE_END
 
     def add_note(self, number: str | None, line: Line, opens_page: bool) -> None:
-        owner = self.owners.get((line.page, number or ""), self.current)
+        key = (line.page, number) if number is not None else None
+        owner = self.owners.get(key, self.current) if key else self.current
         continued = opens_page and self.continues_note(number, line)
-        if continued:
+        if continued and self.last_note is not None:
             owner = self.last_note_owner
-        self.note_is_numbered = number is not None or continued
-        self.last_note = Block(line.page, line.bbox, line.text, "footnote")
+            key = self.last_note.note_key
+        self.note_is_numbered = key is not None
+        self.last_note = Block(line.page, line.bbox, line.text, "footnote", note_key=key)
         owner.notes.append(self.last_note)
         self.last_note_owner = owner
 

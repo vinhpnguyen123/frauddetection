@@ -199,6 +199,18 @@ def test_footnote_stays_with_the_section_that_refers_to_it(tmp_path: Path) -> No
     assert notes_of(parsed, "Retention") == ["2 Counted from the filing date."]
 
 
+def test_blocks_keep_note_references_and_numbers(tmp_path: Path) -> None:
+    path = tmp_path / "doc.pdf"
+    with pymupdf.open() as document:
+        page = document.new_page(width=612, height=792)
+        write_section(page, 100, "Deadlines", "File the report in thirty days", "1")
+        page.insert_text((72, 660), "1 Except when no suspect is known.", fontsize=9)
+        document.save(path)
+    blocks = by_path(parse_pdf(path), "Deadlines").blocks
+    assert blocks[0].marks == ("1",)
+    assert blocks[-1].note_key == (1, "1")
+
+
 def test_a_wrapped_footnote_line_starting_with_a_number_is_not_a_new_note(tmp_path: Path) -> None:
     path = tmp_path / "doc.pdf"
     with pymupdf.open() as document:
@@ -235,6 +247,8 @@ def test_a_footnote_continued_on_the_next_page_keeps_its_section(tmp_path: Path)
     parsed = parse_pdf(path)
     assert len(notes_of(parsed, "Deadlines")) == 2
     assert notes_of(parsed, "Retention") == []
+    notes = [b for b in by_path(parsed, "Deadlines").blocks if b.kind == "footnote"]
+    assert [note.note_key for note in notes] == [(1, "1"), (1, "1")]
 
 
 def two_pages_of_notes(path: Path, first_note: str, second_note: str) -> ParsedDocument:

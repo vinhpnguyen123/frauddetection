@@ -5,7 +5,7 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
-from main import app, embed_model, rerank_model
+from main import MAX_BATCH, app, embed_model, rerank_model, tokenizer
 
 
 class Array(list):
@@ -29,6 +29,15 @@ class FakeRerankModel:
     def predict(self, pairs: list[tuple[str, str]]) -> Array:
         self.seen = pairs
         return Array([float(i) for i, _ in enumerate(pairs)])
+
+
+class FakeTokenizer:
+    def __init__(self) -> None:
+        self.special_tokens: list[bool] = []
+
+    def __call__(self, texts: list[str], add_special_tokens: bool) -> dict[str, list[list[int]]]:
+        self.special_tokens.append(add_special_tokens)
+        return {"input_ids": [[0] * len(text.split()) for text in texts]}
 
 
 @pytest.fixture
@@ -85,3 +94,23 @@ def test_rerank_scores_each_document_without_a_prefix(
     response = client.post("/rerank", json={"query": "q", "documents": ["a", "b"]})
     assert reranker.seen == [("q", "a"), ("q", "b")]
     assert response.json() == {"scores": [0.0, 1.0]}
+
+
+def test_tokens_counts_each_text_without_special_tokens() -> None:
+    fake = FakeTokenizer()
+    app.dependency_overrides[tokenizer] = lambda: fake
+    try:
+        response = TestClient(app).post("/tokens", json={"texts": ["one two", "three"]})
+    finally:
+        app.dependency_overrides.clear()
+    assert response.json() == {"counts": [2, 1]}
+    assert fake.special_tokens == [False]
+
+
+@pytest.mark.parametrize("texts", [[], ["x"] * (MAX_BATCH + 1)], ids=["empty", "too-many"])
+def test_tokens_rejects_a_bad_batch(texts: list[str]) -> None:
+    app.dependency_overrides[tokenizer] = FakeTokenizer
+    try:
+        assert TestClient(app).post("/tokens", json={"texts": texts}).status_code == 422
+    finally:
+        app.dependency_overrides.clear()
