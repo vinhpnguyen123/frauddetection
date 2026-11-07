@@ -1,4 +1,4 @@
-.PHONY: up down migrate seed embedder download synthetic lint test
+.PHONY: up down migrate seed embedder download synthetic parse-report lint test
 
 up:
 	docker compose up -d --build --wait
@@ -17,6 +17,9 @@ download:
 
 synthetic:
 	cd backend && uv run --locked python ../scripts/render_synthetic.py
+
+parse-report:
+	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/parse_report.py
 
 seed:
 	cd backend && PYTHONPATH=. uv run --locked python ../scripts/seed.py
