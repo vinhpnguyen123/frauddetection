@@ -1,4 +1,4 @@
-.PHONY: up down migrate seed embedder download synthetic parse-report ingest corpus-stats lint test
+.PHONY: up down migrate seed embedder download synthetic parse-report ingest corpus-stats hnsw-recall lint test
 
 up:
 	docker compose up -d --build --wait
@@ -23,6 +23,9 @@ parse-report:
 
 ingest:
 	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/ingest.py
+
+hnsw-recall:
+	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/hnsw_recall.py ../eval/datasets/$(SET).jsonl
 
 corpus-stats:
 	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/corpus_stats.py

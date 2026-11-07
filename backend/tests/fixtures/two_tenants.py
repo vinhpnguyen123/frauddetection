@@ -3,6 +3,7 @@
 Every chunk contains SHARED_TERM, so a search for it can only be narrowed by the ACL.
 """
 
+import random
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -24,8 +25,19 @@ class TwoTenants:
     tenant_b: UUID
 
 
+def fixed_embedding(key: str) -> list[float]:
+    """A stable non-zero vector: cosine distance to a zero vector is undefined."""
+    rng = random.Random(key)
+    return [rng.uniform(-1.0, 1.0) for _ in range(768)]
+
+
 async def add_chunk(
-    conn: AsyncConnection, key: str, marker: str, tenant_id: UUID | None, is_current: bool = True
+    conn: AsyncConnection,
+    key: str,
+    marker: str,
+    tenant_id: UUID | None,
+    is_current: bool = True,
+    embedding: list[float] | None = None,
 ) -> None:
     access_level = "tenant_private" if tenant_id else "public"
     document_id = await conn.scalar(
@@ -64,7 +76,7 @@ async def add_chunk(
             token_count=5,
             spans=[{"page": 1, "bbox": [0.0, 0.0, 1.0, 1.0]}],
             content_hash=key,
-            embedding=[0.0] * 768,
+            embedding=embedding or fixed_embedding(key),
         )
     )
 

@@ -10,8 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, async_sessionm
 
 from app.models import Chunk
 from app.retrieval.bm25 import Bm25Retriever, bm25_statement
+from app.retrieval.dense import MODE_SETTINGS, DenseMode, DenseRetriever, dense_statement
 from app.retrieval.fts import FtsRetriever, fts_statement
 from app.retrieval.protocols import RetrievalContext, Retriever
+from tests.fixtures.plans import explain
 from tests.fixtures.two_tenants import (
     CANARY_A,
     CANARY_B,
@@ -20,6 +22,7 @@ from tests.fixtures.two_tenants import (
     STALE_TEXT,
     TwoTenants,
     create_two_tenants,
+    fixed_embedding,
 )
 
 ALL_LEVELS = frozenset({"public", "tenant_private"})
@@ -30,14 +33,40 @@ async def tenants(connection: AsyncConnection) -> TwoTenants:
     return await create_two_tenants(connection)
 
 
-@pytest.fixture(params=[FtsRetriever, Bm25Retriever], ids=["fts", "bm25"])
-def retriever(connection: AsyncConnection, request: pytest.FixtureRequest) -> Retriever:
-    """Every test below runs once per retrieval path."""
-    sessions = async_sessionmaker(
+class FixedEmbedder:
+    """Dense search needs a query vector; which one does not matter to the ACL."""
+
+    async def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return [fixed_embedding(text) for text in texts]
+
+    async def embed_query(self, text: str) -> list[float]:
+        return fixed_embedding(text)
+
+
+def sessions_for(connection: AsyncConnection) -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(
         bind=connection, class_=AsyncSession, join_transaction_mode="create_savepoint"
     )
+
+
+@pytest.fixture(params=["fts", "bm25", "dense_exact", "dense_hnsw"])
+def retriever(connection: AsyncConnection, request: pytest.FixtureRequest) -> Retriever:
+    """Every test using this runs once per retrieval path."""
+    sessions = sessions_for(connection)
+    builders: dict[str, Callable[[], Retriever]] = {
+        "fts": lambda: FtsRetriever(sessions),
+        "bm25": lambda: Bm25Retriever(sessions),
+        "dense_exact": lambda: DenseRetriever(sessions, FixedEmbedder(), "exact"),
+        "dense_hnsw": lambda: DenseRetriever(sessions, FixedEmbedder(), "hnsw"),
+    }
+    return builders[request.param]()
+
+
+@pytest.fixture(params=[FtsRetriever, Bm25Retriever], ids=["fts", "bm25"])
+def lexical_retriever(connection: AsyncConnection, request: pytest.FixtureRequest) -> Retriever:
+    """For tests about query terms. Dense search has none: it always returns the nearest."""
     build: Callable[..., Retriever] = request.param
-    return build(sessions)
+    return build(sessions_for(connection))
 
 
 def context(tenant_id: UUID, levels: frozenset[str] = ALL_LEVELS) -> RetrievalContext:
@@ -55,12 +84,7 @@ async def search_texts(
 
 async def conditions_in_plan(connection: AsyncConnection, statement: Select[Any]) -> str:
     """Return the plan lines where Postgres applies conditions, for the exact statement."""
-    compiled = statement.compile(
-        dialect=connection.dialect, compile_kwargs={"render_postcompile": True}
-    )
-    params = tuple(compiled.params[name] for name in compiled.positiontup or [])
-    plan = await connection.exec_driver_sql(f"EXPLAIN {compiled}", params)
-    lines = [row[0] for row in plan]
+    lines = await explain(connection, statement)
     return "\n".join(
         line
         for line in lines
@@ -151,8 +175,8 @@ async def test_hits_are_ranked_and_respect_the_limit(
     tenants: TwoTenants, retriever: Retriever
 ) -> None:
     hits = await retriever.search(SHARED_TERM, context=context(tenants.tenant_a), limit=1)
-    method = "fts" if isinstance(retriever, FtsRetriever) else "bm25"
-    assert [(hit.rank, hit.method) for hit in hits] == [(1, method)]
+    assert [hit.rank for hit in hits] == [1]
+    assert hits[0].method in {"fts", "bm25", "dense_exact", "dense_hnsw"}
 
 
 @pytest.mark.parametrize("build", [fts_statement, bm25_statement], ids=["fts", "bm25"])
@@ -174,42 +198,56 @@ async def test_explain_shows_the_acl_in_the_query(
 
 
 async def test_a_term_missing_from_the_chunk_does_not_hide_it(
-    connection: AsyncConnection, tenants: TwoTenants, retriever: Retriever
+    connection: AsyncConnection, tenants: TwoTenants, lexical_retriever: Retriever
 ) -> None:
     query = f"{SHARED_TERM} zzzabsentterm"
-    found = await search_texts(connection, retriever, query, context(tenants.tenant_a))
+    found = await search_texts(connection, lexical_retriever, query, context(tenants.tenant_a))
     assert CANARY_A in found
     assert CANARY_B not in found
 
 
 async def test_a_minus_sign_does_not_match_unrelated_chunks(
-    tenants: TwoTenants, retriever: Retriever
+    tenants: TwoTenants, lexical_retriever: Retriever
 ) -> None:
     """`-term` must stay a plain term: as a negation it would match every chunk without it."""
     query = "zzzabsentterm -yyyabsentterm"
-    assert await retriever.search(query, context=context(tenants.tenant_a), limit=50) == []
+    assert await lexical_retriever.search(query, context=context(tenants.tenant_a), limit=50) == []
 
 
 async def test_a_minus_prefixed_term_still_matches(
-    connection: AsyncConnection, tenants: TwoTenants, retriever: Retriever
+    connection: AsyncConnection, tenants: TwoTenants, lexical_retriever: Retriever
 ) -> None:
     query = f"zzzabsentterm -{SHARED_TERM}"
-    found = await search_texts(connection, retriever, query, context(tenants.tenant_a))
+    found = await search_texts(connection, lexical_retriever, query, context(tenants.tenant_a))
     assert CANARY_A in found
     assert CANARY_B not in found
 
 
 async def test_quotes_do_not_require_the_whole_phrase(
-    connection: AsyncConnection, tenants: TwoTenants, retriever: Retriever
+    connection: AsyncConnection, tenants: TwoTenants, lexical_retriever: Retriever
 ) -> None:
     query = f'"{SHARED_TERM} zzzabsentterm"'
-    found = await search_texts(connection, retriever, query, context(tenants.tenant_a))
+    found = await search_texts(connection, lexical_retriever, query, context(tenants.tenant_a))
     assert CANARY_A in found
     assert CANARY_B not in found
 
 
 @pytest.mark.parametrize("query", ["the and of", ""], ids=["stopwords", "empty"])
 async def test_a_query_without_terms_finds_nothing(
-    tenants: TwoTenants, retriever: Retriever, query: str
+    tenants: TwoTenants, lexical_retriever: Retriever, query: str
 ) -> None:
-    assert await retriever.search(query, context=context(tenants.tenant_a), limit=50) == []
+    assert await lexical_retriever.search(query, context=context(tenants.tenant_a), limit=50) == []
+
+
+@pytest.mark.parametrize("mode", ["exact", "hnsw"])
+async def test_explain_shows_the_acl_in_the_dense_query(
+    connection: AsyncConnection, tenants: TwoTenants, mode: DenseMode
+) -> None:
+    for name, value in MODE_SETTINGS[mode].items():
+        await connection.execute(select(func.set_config(name, value, True)))
+    ctx = context(tenants.tenant_a)
+    statement = dense_statement(fixed_embedding("query"), context=ctx, limit=50)
+    conditions = await conditions_in_plan(connection, statement)
+    assert "is_current" in conditions
+    assert "access_level" in conditions
+    assert str(tenants.tenant_a) in conditions
