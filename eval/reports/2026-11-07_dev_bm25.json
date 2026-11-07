@@ -2,18 +2,21 @@
   "set": "dev",
   "set_size": 50,
   "date": "2026-11-07",
-  "git_sha": "890e98c",
+  "git_sha": "139b0e5",
   "corpus": "43 documents, 1326 chunks, nomic-ai/nomic-embed-text-v1.5",
   "labels": "drafted by Claude (an AI model), reviewed item by item by Vinh",
+  "chunks_over_rerank_limit": 277,
   "config_name": "bm25",
-  "config_hash": "caceb0498f94",
+  "config_hash": "f8792989b5a1",
   "config": {
     "method": "bm25",
     "dense_mode": null,
     "query_expansion": true,
     "k_bm25": 50,
     "k_dense": 50,
-    "rrf_k": 60
+    "rrf_k": 60,
+    "rerank_model": null,
+    "rerank_top_n": null
   },
   "real": {
     "n": 32,
@@ -143,8 +146,8 @@
     }
   },
   "latency_ms": {
-    "p50": 6.949916947633028,
-    "p95": 10.054999962449074
+    "p50": 7.170583005063236,
+    "p95": 17.30950002092868
   },
   "leaks": [],
   "failures": [
@@ -163,7 +166,7 @@
       "p_ceiling": 0.6,
       "recall_at_20": 0.6666666666666666,
       "mrr": 0.09090909090909091,
-      "latency_ms": 176.3620419660583,
+      "latency_ms": 96.05425002519041,
       "leaks": []
     },
     {
@@ -175,7 +178,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 11.313292081467807,
+      "latency_ms": 12.15966697782278,
       "leaks": []
     },
     {
@@ -187,7 +190,7 @@
       "p_ceiling": 1.0,
       "recall_at_20": 1.0,
       "mrr": 0.25,
-      "latency_ms": 8.735000039450824,
+      "latency_ms": 11.11504202708602,
       "leaks": []
     },
     {
@@ -199,7 +202,7 @@
       "p_ceiling": 0.4,
       "recall_at_20": 1.0,
       "mrr": 0.5,
-      "latency_ms": 8.064042078331113,
+      "latency_ms": 15.410916996188462,
       "leaks": []
     },
     {
@@ -211,7 +214,7 @@
       "p_ceiling": 0.4,
       "recall_at_20": 0.0,
       "mrr": 0.0,
-      "latency_ms": 8.637125021778047,
+      "latency_ms": 10.137083008885384,
       "leaks": []
     },
     {
@@ -223,7 +226,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 0.07692307692307693,
-      "latency_ms": 8.995167096145451,
+      "latency_ms": 12.146332999691367,
       "leaks": []
     },
     {
@@ -235,7 +238,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 0.3333333333333333,
-      "latency_ms": 6.919916020706296,
+      "latency_ms": 7.167958072386682,
       "leaks": []
     },
     {
@@ -247,7 +250,7 @@
       "p_ceiling": 0.4,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 7.8537920489907265,
+      "latency_ms": 6.732790963724256,
       "leaks": []
     },
     {
@@ -259,7 +262,7 @@
       "p_ceiling": 1.0,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 7.678708992898464,
+      "latency_ms": 7.232208037748933,
       "leaks": []
     },
     {
@@ -271,7 +274,7 @@
       "p_ceiling": 0.4,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 6.66629197075963,
+      "latency_ms": 26.116917026229203,
       "leaks": []
     },
     {
@@ -283,7 +286,7 @@
       "p_ceiling": 0.4,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 6.949540926143527,
+      "latency_ms": 17.30950002092868,
       "leaks": []
     },
     {
@@ -295,7 +298,7 @@
       "p_ceiling": 0.8,
       "recall_at_20": 0.6666666666666666,
       "mrr": 0.14285714285714285,
-      "latency_ms": 7.927709026262164,
+      "latency_ms": 8.256791974417865,
       "leaks": []
     },
     {
@@ -307,7 +310,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 0.5,
-      "latency_ms": 7.339041912928224,
+      "latency_ms": 7.820666069164872,
       "leaks": []
     },
     {
@@ -319,7 +322,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 6.371834082528949,
+      "latency_ms": 6.711042020469904,
       "leaks": []
     },
     {
@@ -331,7 +334,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 0.08333333333333333,
-      "latency_ms": 6.51208299677819,
+      "latency_ms": 6.524541997350752,
       "leaks": []
     },
     {
@@ -343,7 +346,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 9.176666964776814,
+      "latency_ms": 7.160958019085228,
       "leaks": []
     },
     {
@@ -355,7 +358,7 @@
       "p_ceiling": 0.4,
       "recall_at_20": 0.5,
       "mrr": 0.125,
-      "latency_ms": 6.921167019754648,
+      "latency_ms": 7.445416995324194,
       "leaks": []
     },
     {
@@ -367,7 +370,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 0.1111111111111111,
-      "latency_ms": 7.061834097839892,
+      "latency_ms": 6.780041032470763,
       "leaks": []
     },
     {
@@ -379,7 +382,7 @@
       "p_ceiling": 0.8,
       "recall_at_20": 0.6666666666666666,
       "mrr": 0.3333333333333333,
-      "latency_ms": 6.798499962314963,
+      "latency_ms": 7.9298330238088965,
       "leaks": []
     },
     {
@@ -391,7 +394,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 0.0,
       "mrr": 0.0,
-      "latency_ms": 6.476500071585178,
+      "latency_ms": 7.170583005063236,
       "leaks": []
     },
     {
@@ -403,7 +406,7 @@
       "p_ceiling": 0.4,
       "recall_at_20": 1.0,
       "mrr": 0.5,
-      "latency_ms": 7.2229159995913506,
+      "latency_ms": 6.745249964296818,
       "leaks": []
     },
     {
@@ -415,7 +418,7 @@
       "p_ceiling": 0.6,
       "recall_at_20": 0.3333333333333333,
       "mrr": 0.125,
-      "latency_ms": 6.843458046205342,
+      "latency_ms": 6.784374942071736,
       "leaks": []
     },
     {
@@ -427,7 +430,7 @@
       "p_ceiling": 0.6,
       "recall_at_20": 0.5,
       "mrr": 0.2,
-      "latency_ms": 7.880125078372657,
+      "latency_ms": 6.889291922561824,
       "leaks": []
     },
     {
@@ -439,7 +442,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 0.5,
-      "latency_ms": 6.945792003534734,
+      "latency_ms": 7.305499981157482,
       "leaks": []
     },
     {
@@ -451,7 +454,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 0.0,
       "mrr": 0.0,
-      "latency_ms": 6.569375051185489,
+      "latency_ms": 7.485290989279747,
       "leaks": []
     },
     {
@@ -463,7 +466,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 10.054999962449074,
+      "latency_ms": 7.5919999508187175,
       "leaks": []
     },
     {
@@ -475,7 +478,7 @@
       "p_ceiling": 0.4,
       "recall_at_20": 1.0,
       "mrr": 0.5,
-      "latency_ms": 7.333667017519474,
+      "latency_ms": 7.555207936093211,
       "leaks": []
     },
     {
@@ -487,7 +490,7 @@
       "p_ceiling": 0.6,
       "recall_at_20": 0.6666666666666666,
       "mrr": 0.2,
-      "latency_ms": 7.355959038250148,
+      "latency_ms": 7.582167047075927,
       "leaks": []
     },
     {
@@ -499,7 +502,7 @@
       "p_ceiling": 0.4,
       "recall_at_20": 1.0,
       "mrr": 0.14285714285714285,
-      "latency_ms": 7.089124992489815,
+      "latency_ms": 7.459875079803169,
       "leaks": []
     },
     {
@@ -511,7 +514,7 @@
       "p_ceiling": 0.6,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 7.058624993078411,
+      "latency_ms": 6.522457930259407,
       "leaks": []
     },
     {
@@ -523,7 +526,7 @@
       "p_ceiling": 0.6,
       "recall_at_20": 1.0,
       "mrr": 0.5,
-      "latency_ms": 6.7798750242218375,
+      "latency_ms": 7.489084033295512,
       "leaks": []
     },
     {
@@ -535,7 +538,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 0.5,
-      "latency_ms": 7.9562090104445815,
+      "latency_ms": 10.15441701747477,
       "leaks": []
     },
     {
@@ -547,7 +550,7 @@
       "p_ceiling": 0.4,
       "recall_at_20": 1.0,
       "mrr": 0.3333333333333333,
-      "latency_ms": 6.716000032611191,
+      "latency_ms": 7.338374969549477,
       "leaks": []
     },
     {
@@ -559,7 +562,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 6.115791969932616,
+      "latency_ms": 7.058750023134053,
       "leaks": []
     },
     {
@@ -571,7 +574,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 0.058823529411764705,
-      "latency_ms": 6.464166101068258,
+      "latency_ms": 7.494459045119584,
       "leaks": []
     },
     {
@@ -583,7 +586,7 @@
       "p_ceiling": 0.4,
       "recall_at_20": 0.0,
       "mrr": 0.0,
-      "latency_ms": 7.0158750750124454,
+      "latency_ms": 6.483291042968631,
       "leaks": []
     },
     {
@@ -595,7 +598,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 0.16666666666666666,
-      "latency_ms": 8.035041042603552,
+      "latency_ms": 6.422167061828077,
       "leaks": []
     },
     {
@@ -607,7 +610,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 0.2,
-      "latency_ms": 7.126917014829814,
+      "latency_ms": 5.605667014606297,
       "leaks": []
     },
     {
@@ -619,7 +622,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 6.482125027105212,
+      "latency_ms": 6.42987503670156,
       "leaks": []
     },
     {
@@ -631,7 +634,7 @@
       "p_ceiling": 0.2,
       "recall_at_20": 1.0,
       "mrr": 1.0,
-      "latency_ms": 6.519582937471569,
+      "latency_ms": 6.422708043828607,
       "leaks": []
     },
     {
@@ -643,7 +646,7 @@
       "p_ceiling": null,
       "recall_at_20": null,
       "mrr": null,
-      "latency_ms": 6.006165989674628,
+      "latency_ms": 5.352791980840266,
       "leaks": []
     },
     {
@@ -655,7 +658,7 @@
       "p_ceiling": null,
       "recall_at_20": null,
       "mrr": null,
-      "latency_ms": 7.329207961447537,
+      "latency_ms": 5.526000051759183,
       "leaks": []
     },
     {
@@ -667,7 +670,7 @@
       "p_ceiling": null,
       "recall_at_20": null,
       "mrr": null,
-      "latency_ms": 6.949916947633028,
+      "latency_ms": 5.4662920301780105,
       "leaks": []
     },
     {
@@ -679,7 +682,7 @@
       "p_ceiling": null,
       "recall_at_20": null,
       "mrr": null,
-      "latency_ms": 6.139042088761926,
+      "latency_ms": 5.399332963861525,
       "leaks": []
     },
     {
@@ -691,7 +694,7 @@
       "p_ceiling": null,
       "recall_at_20": null,
       "mrr": null,
-      "latency_ms": 6.536624976433814,
+      "latency_ms": 6.621749955229461,
       "leaks": []
     },
     {
@@ -703,7 +706,7 @@
       "p_ceiling": null,
       "recall_at_20": null,
       "mrr": null,
-      "latency_ms": 6.865291972644627,
+      "latency_ms": 5.685499985702336,
       "leaks": []
     },
     {
@@ -715,7 +718,7 @@
       "p_ceiling": null,
       "recall_at_20": null,
       "mrr": null,
-      "latency_ms": 8.742958889342844,
+      "latency_ms": 7.294040988199413,
       "leaks": []
     },
     {
@@ -727,7 +730,7 @@
       "p_ceiling": null,
       "recall_at_20": null,
       "mrr": null,
-      "latency_ms": 6.501083029434085,
+      "latency_ms": 6.207833997905254,
       "leaks": []
     },
     {
@@ -739,7 +742,7 @@
       "p_ceiling": null,
       "recall_at_20": null,
       "mrr": null,
-      "latency_ms": 5.6708750780671835,
+      "latency_ms": 7.566125015728176,
       "leaks": []
     },
     {
@@ -751,7 +754,7 @@
       "p_ceiling": null,
       "recall_at_20": null,
       "mrr": null,
-      "latency_ms": 4.992500063963234,
+      "latency_ms": 6.253625033423305,
       "leaks": []
     }
   ]

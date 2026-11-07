@@ -1,12 +1,12 @@
 # Retrieval eval: hybrid_raw
 
 - Set: `dev` (50 items), date 2026-11-07
-- Git SHA: `890e98c`
+- Git SHA: `139b0e5`
 - Corpus: 43 documents, 1326 chunks, nomic-ai/nomic-embed-text-v1.5
 - Labels: drafted by Claude (an AI model), reviewed item by item by Vinh
 - Metrics use answerable items; the headline rows use `real` items only.
 - P@5 ceiling: the best P@5 the labels allow, since few chunks may be relevant.
-- Config `6e5091f7b9ea`: `{"method": "hybrid", "dense_mode": "exact", "query_expansion": false, "k_bm25": 50, "k_dense": 50, "rrf_k": 60}`
+- Config `0ffc737ed225`: `{"method": "hybrid", "dense_mode": "exact", "query_expansion": false, "k_bm25": 50, "k_dense": 50, "rrf_k": 60, "rerank_model": null, "rerank_top_n": null}`
 
 | Group | n | P@5 (95% CI) | P@5 ceiling | Recall@20 (95% CI) | MRR (95% CI) |
 |---|---|---|---|---|---|
@@ -16,6 +16,6 @@
 | real / concept | 13 | 0.138 (0.092-0.185) | 0.338 | 0.821 (0.641-0.974) | 0.453 (0.255-0.655) |
 | real / multi_hop | 6 | 0.233 (0.200-0.300) | 0.467 | 1.000 (1.000-1.000) | 0.667 (0.375-0.917) |
 
-Latency p50 58.5 ms, p95 96.3 ms.
+Latency p50 59.9 ms, p95 111.7 ms.
 
 Leaks: 0. Items with Recall@20 of 0: ['dev-005', 'dev-025', 'dev-036']
