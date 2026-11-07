@@ -30,6 +30,7 @@ MAX_SINGLE_CHAR_RATIO = 0.2
 PAGE_NUMBER = re.compile(r"\W*(page\s*)?\d+(\s*(of|/)\s*\d+)?\W*", re.IGNORECASE)
 UNPRINTABLE = re.compile("[\x00-\x08\x0e-\x1f\u00ad\ue000-\uf8ff]")  # controls, icon glyphs
 DOT_LEADER = re.compile(r"(\.\s?){5,}")
+SENTENCE_END = '.!?:;”"'
 WORD = re.compile(r"[A-Za-z]{3}")
 CONTENTS_TITLES = {"contents", "table of contents"}
 NOTE_NUMBER = re.compile(r"(\d{1,3})(?:[.)]|\s|$)")
@@ -275,7 +276,7 @@ def join_body(blocks: list[Block]) -> str:
     for block in blocks:
         if not text:
             text = block.text
-        elif text[-1] not in '.!?:;”"' and block.text[0].islower():
+        elif text[-1] not in SENTENCE_END and block.text[0].islower():
             text = join_lines(text, block.text)
         else:
             text = f"{text}\n\n{block.text}"
@@ -300,6 +301,8 @@ class SectionBuilder:
         self.drafts = [self.current]
         self.owners: dict[tuple[int, str], Draft] = {}
         self.last_note_owner = self.current
+        self.last_note: Block | None = None
+        self.note_is_numbered = False  # captions such as "Source: Italy" never continue
 
     def claim(self, line: Line) -> None:
         for mark in line.marks:
@@ -322,11 +325,23 @@ class SectionBuilder:
         self.current.body.append(Block(line.page, line.bbox, line.text, "body"))
         self.claim(line)
 
-    def add_note(self, number: str | None, line: Line) -> None:
+    def continues_note(self, number: str | None, line: Line) -> bool:
+        """True for an unnumbered note that opens a page right after an unfinished footnote."""
+        last = self.last_note
+        if number is not None or last is None or last.page != line.page - 1:
+            return False
+        if not self.note_is_numbered:
+            return False
+        return line.text[0].islower() or last.text[-1] not in SENTENCE_END
+
+    def add_note(self, number: str | None, line: Line, opens_page: bool) -> None:
         owner = self.owners.get((line.page, number or ""), self.current)
-        if number is None and line.text[0].islower():
-            owner = self.last_note_owner  # the rest of a note from the previous page
-        owner.notes.append(Block(line.page, line.bbox, line.text, "footnote"))
+        continued = opens_page and self.continues_note(number, line)
+        if continued:
+            owner = self.last_note_owner
+        self.note_is_numbered = number is not None or continued
+        self.last_note = Block(line.page, line.bbox, line.text, "footnote")
+        owner.notes.append(self.last_note)
         self.last_note_owner = owner
 
     def sections(self) -> tuple[Section, ...]:
@@ -389,8 +404,8 @@ def parse_pdf(path: Path) -> ParsedDocument:
             else:
                 builder.add_body(paragraph)
         marks = {mark for paragraph in page for mark in paragraph.marks}
-        for number, note in group_notes(notes, marks):
-            builder.add_note(number, note)
+        for index, (number, note) in enumerate(group_notes(notes, marks)):
+            builder.add_note(number, note, opens_page=index == 0)
     return ParsedDocument(
         page_count=len(raw),
         sections=builder.sections(),

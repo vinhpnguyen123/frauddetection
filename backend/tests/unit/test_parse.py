@@ -237,6 +237,47 @@ def test_a_footnote_continued_on_the_next_page_keeps_its_section(tmp_path: Path)
     assert notes_of(parsed, "Retention") == []
 
 
+def two_pages_of_notes(path: Path, first_note: str, second_note: str) -> ParsedDocument:
+    with pymupdf.open() as document:
+        first = document.new_page(width=612, height=792)
+        write_section(first, 100, "Deadlines", "File the report in thirty days", "1")
+        first.insert_text((72, 672), first_note, fontsize=9)
+        second = document.new_page(width=612, height=792)
+        write_section(second, 100, "Retention", "Keep the records for five years")
+        second.insert_text((72, 672), second_note, fontsize=9)
+        document.save(path)
+    return parse_pdf(path)
+
+
+def test_an_unfinished_footnote_continues_even_with_an_uppercase_word(tmp_path: Path) -> None:
+    """Regression: the rest of an exception landed in the next section."""
+    parsed = two_pages_of_notes(
+        tmp_path / "doc.pdf",
+        "1 This exception applies to",
+        "SAR filings with no known suspect.",
+    )
+    assert notes_of(parsed, "Deadlines") == [
+        "1 This exception applies to",
+        "SAR filings with no known suspect.",
+    ]
+    assert notes_of(parsed, "Retention") == []
+
+
+def test_a_finished_footnote_does_not_capture_the_next_page(tmp_path: Path) -> None:
+    parsed = two_pages_of_notes(
+        tmp_path / "doc.pdf", "1 This note is complete.", "Source: agency data."
+    )
+    assert notes_of(parsed, "Deadlines") == ["1 This note is complete."]
+    assert notes_of(parsed, "Retention") == ["Source: agency data."]
+
+
+def test_an_unnumbered_caption_does_not_capture_the_next_page(tmp_path: Path) -> None:
+    """Regression: "Source: Luxembourg" has no full stop, but it is not an unfinished footnote."""
+    parsed = two_pages_of_notes(tmp_path / "doc.pdf", "Source: Luxembourg", "Source: Belgium")
+    assert notes_of(parsed, "Deadlines") == ["Source: Luxembourg"]
+    assert notes_of(parsed, "Retention") == ["Source: Belgium"]
+
+
 def test_a_note_without_a_reference_stays_in_the_section_at_the_page_end(tmp_path: Path) -> None:
     path = tmp_path / "doc.pdf"
     with pymupdf.open() as document:
