@@ -1,4 +1,4 @@
-.PHONY: up down migrate seed embedder lint test
+.PHONY: up down migrate seed embedder download synthetic parse-report ingest corpus-stats lint test
 
 up:
 	docker compose up -d --build --wait
@@ -11,6 +11,21 @@ migrate:
 
 embedder:
 	cd embedder && uv run --locked --extra ml uvicorn main:app --host 127.0.0.1 --port 8001
+
+download:
+	cd backend && PYTHONPATH=. uv run --locked python ../scripts/download.py --stage 1
+
+synthetic:
+	cd backend && uv run --locked python ../scripts/render_synthetic.py
+
+parse-report:
+	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/parse_report.py
+
+ingest:
+	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/ingest.py
+
+corpus-stats:
+	cd backend && PYTHONPATH=.:.. uv run --locked python ../scripts/corpus_stats.py
 
 seed:
 	cd backend && PYTHONPATH=. uv run --locked python ../scripts/seed.py

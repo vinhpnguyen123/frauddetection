@@ -1,0 +1,17 @@
+{
+  "documents_public": 30,
+  "documents_tenant_private": 13,
+  "documents_without_current_version": 0,
+  "versions": 43,
+  "sections": 947,
+  "chunks_current": 1326,
+  "chunks_total": 1326,
+  "avg_tokens": 317.1,
+  "chunks_empty": 0,
+  "chunks_without_spans": 0,
+  "chunks_over_max": 0,
+  "chunks_under_20_tokens": 55,
+  "jobs": {
+    "succeeded": 43
+  }
+}

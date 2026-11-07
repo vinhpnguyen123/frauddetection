@@ -6,6 +6,7 @@ x-backend: &backend
     DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?set in .env}:${POSTGRES_PASSWORD:?set in .env}@postgres:5432/${POSTGRES_DB:?set in .env}
     REDIS_URL: redis://redis:6379/0
     EMBEDDER_URL: http://host.docker.internal:8001
+    STORAGE_DIR: /srv/storage
   depends_on:
     postgres:
       condition: service_healthy
@@ -55,6 +56,8 @@ services:
 
   worker:
     <<: *backend
+    volumes:
+      - ./storage:/srv/storage:ro
     command:
       - .venv/bin/celery
       - --app=app.ingestion.tasks:celery_app

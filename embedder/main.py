@@ -29,6 +29,14 @@ class EmbedResponse(BaseModel):
     embeddings: list[list[float]]
 
 
+class TokensRequest(BaseModel):
+    texts: list[str] = Field(min_length=1, max_length=MAX_BATCH)
+
+
+class TokensResponse(BaseModel):
+    counts: list[int]
+
+
 class RerankRequest(BaseModel):
     query: str
     documents: list[str] = Field(min_length=1, max_length=MAX_BATCH)
@@ -54,6 +62,18 @@ def load_embed_model() -> Any:
     )
 
 
+# Any: transformers is an optional dependency, absent from CI.
+@lru_cache
+def load_tokenizer() -> Any:
+    """Only the tokenizer, so counting tokens never loads the model weights."""
+    from transformers import AutoTokenizer
+
+    settings = get_settings()
+    return AutoTokenizer.from_pretrained(
+        settings.embed_model, revision=settings.embed_model_revision
+    )
+
+
 @lru_cache
 def load_rerank_model() -> Any:
     from sentence_transformers import CrossEncoder
@@ -72,6 +92,11 @@ def rerank_model() -> Any:
         return load_rerank_model()
 
 
+def tokenizer() -> Any:
+    with model_lock:
+        return load_tokenizer()
+
+
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
     return {"status": "ok"}
@@ -85,6 +110,13 @@ def embed(request: EmbedRequest, model: Annotated[Any, Depends(embed_model)]) ->
     with model_lock:
         vectors = model.encode([prefix + text for text in request.texts])
     return EmbedResponse(embeddings=vectors.tolist())
+
+
+@app.post("/tokens")
+def tokens(request: TokensRequest, counter: Annotated[Any, Depends(tokenizer)]) -> TokensResponse:
+    """Count tokens without the task prefix or special tokens, as chunk sizes are measured."""
+    encoded = counter(request.texts, add_special_tokens=False)
+    return TokensResponse(counts=[len(ids) for ids in encoded["input_ids"]])
 
 
 @app.post("/rerank")

@@ -33,7 +33,7 @@ plugins = ["pydantic.mypy"]
 
 # Only installed with the `ml` extra, and ships no types CI can see.
 [[tool.mypy.overrides]]
-module = "sentence_transformers.*"
+module = ["sentence_transformers.*", "transformers.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
