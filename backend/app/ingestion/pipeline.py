@@ -17,7 +17,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.ingestion.chunk import MAX_TOKENS, Chunk, chunk_document
-from app.ingestion.parse import ParsedDocument, parse_pdf
+from app.ingestion.parse import ParsedDocument, parse_pdf, quality_flags
 from app.models import Chunk as ChunkRow
 from app.models import Document, DocumentVersion, IngestionJob
 from app.models import Section as SectionRow
@@ -187,9 +187,8 @@ async def claim(sessions: async_sessionmaker[AsyncSession], job_id: UUID) -> Cla
 
 def check_quality(parsed: ParsedDocument, chunks: list[Chunk]) -> None:
     """The per-document checks of docs/DATASET.md §5. Raises instead of storing a bad version."""
-    problems = []
-    if parsed.page_count == 0:
-        problems.append("no pages")
+    # no_headings stays a report-only flag: a short notice can be fine without any heading.
+    problems = [flag for flag in quality_flags(parsed) if flag != "no_headings"]
     if not chunks:
         problems.append("no chunks")
     if any(not chunk.text.strip() for chunk in chunks):
@@ -277,8 +276,29 @@ async def write_version(
     await session.execute(
         insert(ChunkRow), chunk_rows(chunks, vectors, section_ids, version_id, document)
     )
-    await flip_current(session, document, version_id)
+    if not await superseded(session, job):
+        await flip_current(session, document, version_id)
     return version_id
+
+
+async def superseded(session: AsyncSession, job: ClaimedJob) -> bool:
+    """True if a job registered later already stored its version: this content is the older one.
+
+    Jobs of one document can finish out of order when one waits through retries. The document
+    row lock taken by write_version makes this check safe.
+    """
+    mine = select(IngestionJob.created_at).where(IngestionJob.id == job.id).scalar_subquery()
+    newer = await session.scalar(
+        select(IngestionJob.id)
+        .where(
+            IngestionJob.tenant_id.is_not_distinct_from(job.tenant_id),
+            IngestionJob.doc_key == job.doc_key,
+            IngestionJob.status == "succeeded",
+            IngestionJob.created_at > mine,
+        )
+        .limit(1)
+    )
+    return newer is not None
 
 
 def chunk_rows(

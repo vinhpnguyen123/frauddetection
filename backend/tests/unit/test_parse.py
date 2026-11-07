@@ -9,6 +9,7 @@ from scripts.download import MANIFEST, read_manifest
 from scripts.parse_report import expected_pdfs, report_row
 from scripts.render_synthetic import SOURCE_DIR, render_pdf
 
+from app.ingestion.chunk import Chunk, Span
 from app.ingestion.parse import (
     ParsedDocument,
     Section,
@@ -17,6 +18,7 @@ from app.ingestion.parse import (
     quality_flags,
     read_page,
 )
+from app.ingestion.pipeline import IngestionFailed, check_quality
 
 Text = tuple[float, float, str, float, str]  # x, y, text, size, font
 BODY = "This is an ordinary sentence of body text that runs across the line."
@@ -388,3 +390,20 @@ def test_report_covers_every_manifest_document_and_policy(tmp_path: Path) -> Non
     assert len(expected) == len(set(expected)) == len(manifest) + len(policies)
     assert tmp_path / "fincen" / "fincen-FIN-2022-A002.pdf" in expected
     assert tmp_path / "synthetic" / "bluefin" / "cdd-edd-procedure.pdf" in expected
+
+
+def test_quality_check_rejects_broken_extraction_but_allows_no_headings(tmp_path: Path) -> None:
+    fragment = parse(tmp_path, [(72, 100, "Hi there.", 11, "helv")])
+    with pytest.raises(IngestionFailed, match="low_text_density"):
+        check_quality(fragment, [])
+
+    letters = [(72, 100 + 14 * i, "x", 11, "helv") for i in range(30)]
+    text = [body(600, text=BODY * 2), body(620, text=BODY * 2), body(640, text=BODY * 2)]
+    broken = parse(tmp_path, [*letters, *text])
+    with pytest.raises(IngestionFailed, match="many_single_char_lines"):
+        check_quality(broken, [])
+
+    plain = parse(tmp_path, [body(100 + 16 * i) for i in range(12)])
+    assert quality_flags(plain) == ["no_headings"]
+    span = Span(1, (0.0, 0.0, 1.0, 1.0))
+    check_quality(plain, [Chunk(0, 0, "", "text", 1, (span,), "hash")])

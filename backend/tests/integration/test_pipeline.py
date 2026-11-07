@@ -61,8 +61,11 @@ async def sessions(test_database_url: str) -> AsyncIterator[Sessions]:
     await engine.dispose()
 
 
+FILLER = "Records stay available for review. " * 8  # above the parser's text density floor
+
+
 def pdf(words: str) -> bytes:
-    return render_pdf(f"# Title\n\n## Scope\n\n{words}\n\n## Records\n\nKeep records five years.")
+    return render_pdf(f"# Title\n\n## Scope\n\n{words}\n\n## Records\n\n{FILLER}")
 
 
 def item_for(
@@ -209,6 +212,62 @@ async def test_changed_bytes_make_a_new_current_version(sessions: Sessions, tmp_
     assert current and all(chunk.version_id == versions[1].id for chunk in current)
     assert old and all(chunk.version_id == versions[0].id for chunk in old)
     assert await count(sessions, Document) == 1
+
+
+async def current_text(sessions: Sessions) -> str:
+    async with sessions() as session:
+        chunks = (await session.scalars(select(Chunk.text).where(Chunk.is_current))).all()
+    return " ".join(chunks)
+
+
+async def test_an_older_job_finishing_late_does_not_replace_newer_content(
+    sessions: Sessions, tmp_path: Path
+) -> None:
+    """Regression: a retried job from an old file made obsolete text current again."""
+    old_job, _ = await enqueue(sessions, item_for(tmp_path, pdf("Old rule text.")))
+    new_job, _ = await enqueue(sessions, item_for(tmp_path, pdf("New rule text.")))
+
+    await run_job(new_job, META, sessions=sessions, embedder=FakeEmbedder(), storage_dir=tmp_path)
+    await run_job(old_job, META, sessions=sessions, embedder=FakeEmbedder(), storage_dir=tmp_path)
+
+    assert (await job(sessions, old_job)).status == "succeeded"
+    assert await count(sessions, DocumentVersion) == 2  # the old version is kept, not current
+    text_now = await current_text(sessions)
+    assert "New rule text" in text_now and "Old rule text" not in text_now
+    async with sessions() as session:
+        document = await session.scalar(select(Document))
+        current = (
+            await session.scalars(select(DocumentVersion).where(DocumentVersion.is_current))
+        ).all()
+    assert document is not None and [v.id for v in current] == [document.current_version_id]
+    assert document.current_version_id == (await job(sessions, new_job)).version_id
+
+
+async def test_an_older_job_becomes_current_while_the_newer_one_has_failed(
+    sessions: Sessions, tmp_path: Path
+) -> None:
+    old_job, _ = await enqueue(sessions, item_for(tmp_path, pdf("Old rule text.")))
+    new_job, _ = await enqueue(sessions, item_for(tmp_path, pdf("New rule text.")))
+    await set_job(sessions, new_job, status="failed", attempts=3)
+
+    await run_job(old_job, META, sessions=sessions, embedder=FakeEmbedder(), storage_dir=tmp_path)
+
+    assert "Old rule text" in await current_text(sessions)
+
+
+async def test_a_broken_extraction_never_replaces_a_good_version(
+    sessions: Sessions, tmp_path: Path
+) -> None:
+    """Regression: a nearly empty scan passed the checks and hid the complete version."""
+    await ingest(sessions, tmp_path, item_for(tmp_path, pdf("Complete rule text.")))
+    broken = render_pdf("# Title\n\n## Scope\n\nOne readable fragment.")
+
+    job_id = await ingest(sessions, tmp_path, item_for(tmp_path, broken))
+
+    failed = await job(sessions, job_id)
+    assert failed.status == "failed" and "low_text_density" in (failed.error or "")
+    assert await count(sessions, DocumentVersion) == 1
+    assert "Complete rule text" in await current_text(sessions)
 
 
 async def test_a_failed_embedding_leaves_nothing_and_is_retried(
