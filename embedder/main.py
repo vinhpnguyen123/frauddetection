@@ -2,12 +2,14 @@
 
 from functools import lru_cache
 from threading import Lock
+from time import perf_counter
 from typing import Annotated, Any, Literal
 
 from fastapi import Depends, FastAPI
 from pydantic import BaseModel, Field
 
 from config import Settings, get_settings
+from diagnostics import inspect_pairs
 
 # Document and query embeddings need different task prefixes. They are added only here, so a
 # client cannot forget them.
@@ -40,10 +42,12 @@ class TokensResponse(BaseModel):
 class RerankRequest(BaseModel):
     query: str
     documents: list[str] = Field(min_length=1, max_length=MAX_BATCH)
+    diagnostics: bool = False
 
 
 class RerankResponse(BaseModel):
     scores: list[float]
+    diagnostics: dict[str, Any] | None = None  # Any: optional content-free ML diagnostics
 
 
 # Any: sentence-transformers is an optional dependency, absent from CI.
@@ -103,6 +107,18 @@ def healthz(settings: Annotated[Settings, Depends(get_settings)]) -> dict[str, s
     return {"status": "ok", "rerank_model": settings.rerank_model}
 
 
+@app.get("/metadata")
+def metadata(settings: Annotated[Settings, Depends(get_settings)]) -> dict[str, str]:
+    """Pinned model identities only; never expose arbitrary environment variables."""
+    return {
+        "embed_model": settings.embed_model,
+        "embed_model_revision": settings.embed_model_revision,
+        "embed_code_revision": settings.embed_code_revision,
+        "rerank_model": settings.rerank_model,
+        "rerank_model_revision": settings.rerank_model_revision,
+    }
+
+
 # Plain `def`: FastAPI runs these in a thread, keeping slow model calls off the event loop.
 @app.post("/embed")
 def embed(request: EmbedRequest, model: Annotated[Any, Depends(embed_model)]) -> EmbedResponse:
@@ -120,9 +136,31 @@ def tokens(request: TokensRequest, counter: Annotated[Any, Depends(tokenizer)]) 
     return TokensResponse(counts=[len(ids) for ids in encoded["input_ids"]])
 
 
-@app.post("/rerank")
-def rerank(request: RerankRequest, model: Annotated[Any, Depends(rerank_model)]) -> RerankResponse:
+@app.post("/rerank", response_model_exclude_none=True)
+def rerank(
+    request: RerankRequest,
+    model: Annotated[Any, Depends(rerank_model)],
+) -> RerankResponse:
     """Score each document against the query, in input order."""
     with model_lock:
-        scores = model.predict([(request.query, document) for document in request.documents])
-    return RerankResponse(scores=scores.tolist())
+        pairs = [(request.query, document) for document in request.documents]
+        if not request.diagnostics:
+            return RerankResponse(scores=model.predict(pairs).tolist())
+        started = perf_counter()
+        scores = model.predict(pairs).tolist()
+        scoring_ms = (perf_counter() - started) * 1000
+        details = None
+        if request.diagnostics:
+            settings = get_settings()
+            started = perf_counter()
+            tokens = inspect_pairs(model, pairs)
+            details = {
+                "model": settings.rerank_model,
+                "model_revision": settings.rerank_model_revision,
+                "tokenizer_revision": settings.rerank_model_revision,
+                "scoring_ms": scoring_ms,
+                "token_inspection_ms": (perf_counter() - started) * 1000,
+                "scores": scores,
+                "tokens": tokens,
+            }
+    return RerankResponse(scores=scores, diagnostics=details)

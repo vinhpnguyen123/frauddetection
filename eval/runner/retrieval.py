@@ -44,6 +44,7 @@ from eval.runner.metrics import (
     recall_at_20,
     reciprocal_rank,
 )
+from eval.runner.tracing import TraceCollector
 
 REPORTS = ROOT / "eval" / "reports"
 LEVELS = frozenset({"public", "tenant_private"})
@@ -102,22 +103,31 @@ def build_retriever(
     sessions: async_sessionmaker[AsyncSession],
     embedder: Embedder,
     reranker: Reranker | None = None,
+    *,
+    trace: TraceCollector | None = None,
 ) -> Retriever:
+    def observed(base: Retriever, name: str) -> Retriever:
+        return trace.wrap(base, name) if trace is not None else base
+
     if config.method == "fts":
-        return FtsRetriever(sessions)
+        return observed(FtsRetriever(sessions), "fts")
     if config.method == "bm25":
-        return Bm25Retriever(sessions)
+        return observed(Bm25Retriever(sessions), "bm25")
     assert config.dense_mode is not None
-    dense = DenseRetriever(sessions, embedder, config.dense_mode)
+    dense_embedder = trace.wrap_embedder(embedder) if trace is not None else embedder
+    dense = observed(DenseRetriever(sessions, dense_embedder, config.dense_mode), "dense")
     if config.method == "dense":
         return dense
-    hybrid = HybridRetriever(
-        Bm25Retriever(sessions),
-        dense,
-        k_bm25=config.k_bm25,
-        k_dense=config.k_dense,
-        rrf_k=config.rrf_k,
-        query_expansion=config.query_expansion,
+    hybrid = observed(
+        HybridRetriever(
+            observed(Bm25Retriever(sessions), "bm25"),
+            dense,
+            k_bm25=config.k_bm25,
+            k_dense=config.k_dense,
+            rrf_k=config.rrf_k,
+            query_expansion=config.query_expansion,
+        ),
+        "hybrid",
     )
     if config.method == "hybrid":
         return hybrid
@@ -168,11 +178,16 @@ async def run_item(
     retriever: Retriever,
     tenant_id: UUID,
     corpus: dict[UUID, CorpusChunk],
+    *,
+    trace: TraceCollector | None = None,
+    sessions: async_sessionmaker[AsyncSession] | None = None,
 ) -> ItemResult:
     # Hybrid expands inside the retriever, because only its BM25 input may change.
     expand = config.query_expansion and config.method not in ("hybrid", "rerank")
     query = expand_query(item.query) if expand else item.query
     context = RetrievalContext(uuid4(), tenant_id, LEVELS)
+    if trace is not None:
+        trace.reset()
     started = time.perf_counter()
     hits = await retriever.search(query, context=context, limit=RECALL_AT)
     latency_ms = (time.perf_counter() - started) * 1000
@@ -192,7 +207,7 @@ async def run_item(
             "recall_at_20": recall_at_20(ranked, anchors),
             "mrr": reciprocal_rank(ranked, relevant),
         }
-    return ItemResult(
+    result = ItemResult(
         id=item.id,
         category=item.category,
         data_kind=item.data_kind,
@@ -201,6 +216,19 @@ async def run_item(
         leaks=find_leaks(item, ranked, tenant_id, corpus),
         **scores,  # type: ignore[arg-type]
     )
+    if trace is not None:
+        assert sessions is not None
+        await trace.finish(
+            query_id=item.id,
+            config=config,
+            context=context,
+            gold=anchor_chunks(item, corpus),
+            quotes=[a.quote for a in item.relevant],
+            final=hits,
+            sessions=sessions,
+            retrieval_ms=latency_ms,
+        )
+    return result
 
 
 def summarize(results: list[ItemResult]) -> dict[str, object]:
@@ -481,8 +509,11 @@ async def evaluate(
     *,
     allow_unmatched: bool = False,
     allow_uncommitted_labels: bool = False,
+    trace_enabled: bool = False,
 ) -> None:
     """Run one config or `all`. `label` keeps an experiment's report apart from the main row."""
+    if trace_enabled and (set_name != "dev" or not label):
+        sys.exit("tracing requires SET=dev and a unique run label; test evaluation is not allowed")
     path = DATASETS / f"{set_name}.jsonl"
     fingerprint = input_fingerprint(path, allow_uncommitted_labels=allow_uncommitted_labels)
     provenance = load_provenance(path)
@@ -511,17 +542,37 @@ async def evaluate(
         "chunks_over_rerank_limit": await chunks_over_rerank_limit(sessions),
         "unmatched_anchors": len(unmatched_anchors(items, corpus)),
     }
+    if trace_enabled:
+        from eval.runner.trace_metadata import capture_metadata
+
+        meta["trace_manifest"] = await capture_metadata(sessions, embedder)
+        meta["latency_kind"] = "instrumented: includes token inspection; not a clean latency run"
     REPORTS.mkdir(exist_ok=True)
     reports = []
     for config_key in names:
         config = await resolve_config(config_key, embedder)
-        retriever = build_retriever(config, sessions, embedder, embedder)
+        trace = TraceCollector() if trace_enabled else None
+        reranker = trace.wrap_reranker(embedder) if trace is not None else embedder
+        retriever = build_retriever(config, sessions, embedder, reranker, trace=trace)
+        name = f"{config_key}_{label}" if label else config_key
+        stem = REPORTS / f"{today}_{set_name}_{name}"
+        if trace_enabled and any(
+            stem.with_suffix(s).exists() for s in (".json", ".md", ".trace.jsonl")
+        ):
+            sys.exit("trace run artifacts already exist: choose a new run label")
         started_at = datetime.now(UTC).isoformat()
         results = [
-            await run_item(item, config, retriever, tenants[item.ask_as_tenant], corpus)
+            await run_item(
+                item,
+                config,
+                retriever,
+                tenants[item.ask_as_tenant],
+                corpus,
+                trace=trace,
+                sessions=sessions,
+            )
             for item in items
         ]
-        name = f"{config_key}_{label}" if label else config_key
         report = build_report(name, config, results, meta)
         report["config_key"] = config_key
         report["started_at_utc"] = started_at
@@ -532,7 +583,14 @@ async def evaluate(
         ):
             sys.exit("evaluation inputs changed during the run; refusing to write a report")
         reports.append(report)
-        stem = REPORTS / f"{today}_{set_name}_{name}"
+        if trace is not None:
+            from eval.runner.trace_metadata import machine_conditions
+
+            report["machine_after"] = machine_conditions()
+            report["trace_file"] = stem.with_suffix(".trace.jsonl").name
+            stem.with_suffix(".trace.jsonl").write_text(
+                "".join(t.model_dump_json() + "\n" for t in trace.queries)
+            )
         stem.with_suffix(".json").write_text(json.dumps(report, indent=2) + "\n")
         stem.with_suffix(".md").write_text(render_config(report))
         print(f"{name}: {cell(report['real'], 'p_at_5')}")
@@ -563,6 +621,7 @@ def main() -> None:
     parser.add_argument("label", nargs="?")
     parser.add_argument("--check", metavar="SET")
     parser.add_argument(ALLOW_UNMATCHED, action="store_true")
+    parser.add_argument("--trace", action="store_true", help="Content-free stage traces (dev only)")
     parser.add_argument(
         "--allow-uncommitted-labels",
         action="store_true",
@@ -581,6 +640,7 @@ def main() -> None:
                 args.label,
                 allow_unmatched=args.allow_unmatched,
                 allow_uncommitted_labels=args.allow_uncommitted_labels,
+                trace_enabled=args.trace,
             )
         )
 

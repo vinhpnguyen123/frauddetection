@@ -189,3 +189,43 @@ async def test_a_bad_request_is_not_retried() -> None:
     with pytest.raises(httpx.HTTPStatusError):
         await client_for(handler).embed_documents(["x"])
     assert calls == [1]
+
+
+async def test_detailed_rerank_uses_the_same_order_and_one_scoring_request() -> None:
+    requests = []
+    token = dict(
+        query_tokens=1,
+        document_tokens=2,
+        special_tokens=3,
+        input_tokens=6,
+        effective_tokens=6,
+        retained_query_tokens=1,
+        retained_document_tokens=2,
+        effective_limit=512,
+        truncated=False,
+        document_visible_ranges=[[0, 6]],
+        input_ids_sha256="fixture",
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json={
+                "scores": [0.5, 0.5],
+                "diagnostics": {
+                    "model": "fixture",
+                    "model_revision": "revision",
+                    "tokenizer_revision": "revision",
+                    "scoring_ms": 1.0,
+                    "token_inspection_ms": 2.0,
+                    "scores": [0.5, 0.5],
+                    "tokens": [token, token],
+                },
+            },
+        )
+
+    hits, details = await client_for(handler).rerank_detailed("query", CANDIDATES[::-1], 1)
+    assert len(requests) == 1 and requests[0]["diagnostics"] is True
+    assert hits[0].chunk_id == LOW and details.scores == [0.5, 0.5]
+    assert len(details.tokens) == 2
