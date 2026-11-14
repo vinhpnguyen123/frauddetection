@@ -1,0 +1,1933 @@
+{
+  "report_kind": "development_diagnostic_frozen_trace_rescoring",
+  "label_status": "AI drafted; Vinh accepted Vietnamese summary; not independent expert or card-by-card human validation",
+  "set": "dev",
+  "query_count": 32,
+  "data_kind": "real",
+  "ranking_source": "frozen Q1 trace, hash bound through comparison inputs",
+  "retrieval_rerun": false,
+  "configuration_changed": false,
+  "gold_changed": false,
+  "eligible_for_official_adjudicated_claims": false,
+  "AI_relevance_policy": "complete or partial in public real source cards; internal/synthetic policies excluded; secondary corroboration remains partial retrieval relevance, never automatically answer sufficiency",
+  "recall_policy": "Original anchor Recall@20 retained. AI Recall@20 unavailable until a complete accepted anchor inventory exists. No passage-group recall is substituted.",
+  "bootstrap": {
+    "resamples": 1000,
+    "seed": 20261107,
+    "interval": "95% percentile over queries; paired label deltas use identical query IDs"
+  },
+  "interpretation": "Changes between original and AI labels measure sensitivity to labeling, not retrieval improvement. All rankings are unchanged. AI scope/authority decisions remain reviewable assumptions. No latency or security rate is remeasured.",
+  "input_sha256": {
+    "/Users/vinhnguyen/FraudDetection/eval/.cache/relevance-review-followup-2026-11-13/score_diagnostic.py": "82b04b7312d4696a168416989d9508da2b335f33b112bcbbffac02dd295acc84",
+    "/Users/vinhnguyen/FraudDetection/eval/.cache/relevance-review-followup-2026-11-13/comparison-inputs.jsonl": "b5a62ce711f0e2a66492bda7b7079da7cd5fe839a8d6bb13e59ddf367da081aa",
+    "/Users/vinhnguyen/FraudDetection/eval/.cache/relevance-review-followup-2026-11-13/rematch-summary.json": "27ce7ae379c8cd1fccacbe8b4406b96c0931d55479e2deedb8718ced135fdf8e",
+    "/Users/vinhnguyen/FraudDetection/eval/.cache/relevance-review-followup-2026-11-13/Vinh-review-acknowledgment.json": "c5ed496ecc9432b881bd14a8697d433dd58a51f571304c0d9b0241a4501fdfe7",
+    "/Users/vinhnguyen/FraudDetection/eval/.cache/relevance-labels-v2-ai-2026-11-13/reviewer.ai.jsonl": "6ae79819159da599693d3efe1d542f7b32c431f2feeaeaecdff996eb76b54c71",
+    "/Users/vinhnguyen/FraudDetection/eval/.cache/relevance-labels-v2-ai-2026-11-13/sufficiency.ai.jsonl": "6835bf4a7e7e51ec1187c307ff57fb193b7288f7cd95485aa2fd609fd32ea8d5",
+    "/Users/vinhnguyen/FraudDetection/eval/.cache/relevance-labels-v2-ai-2026-11-13/manifest.json": "98d57bfaf1cf11a855172876d44f5f1e38e3ed4a975127fdf56a91feb1636544",
+    "eval/runner/metrics.py": "876e2585732cc7ba85a28839138b49efb252180f5165dee10285b00a1b791952",
+    "eval/runner/review_metrics.py": "cf4ef698d93f1532c748e8c20bc53dbf73d2a3c4e3d0300e99f0d1189b563079"
+  },
+  "methods": {
+    "bm25": {
+      "aggregate": {
+        "original_p_at_5": {
+          "mean": 0.19375,
+          "ci95": [
+            0.13125,
+            0.25625000000000003
+          ]
+        },
+        "AI_public_p_at_5": {
+          "mean": 0.55625,
+          "ci95": [
+            0.45625,
+            0.65625
+          ]
+        },
+        "original_mrr": {
+          "mean": 0.4728681908369408,
+          "ci95": [
+            0.33549219877344877,
+            0.6098710317460317
+          ]
+        },
+        "AI_public_mrr": {
+          "mean": 0.7416666666666667,
+          "ci95": [
+            0.6083333333333333,
+            0.8552083333333333
+          ]
+        },
+        "original_anchor_recall_at_20": {
+          "mean": 0.8151041666666666,
+          "ci95": [
+            0.6927083333333334,
+            0.9114583333333334
+          ]
+        },
+        "paired_label_delta_p_at_5": {
+          "n": 32,
+          "mean_delta": 0.3625,
+          "ci95": [
+            0.26875,
+            0.45
+          ]
+        },
+        "paired_label_delta_mrr": {
+          "n": 32,
+          "mean_delta": 0.2687984758297258,
+          "ci95": [
+            0.1486111111111111,
+            0.3838147095959596
+          ]
+        },
+        "AI_evidence_sufficiency_at_5": {
+          "true": 20,
+          "false": 12,
+          "unknown": 0,
+          "denominator": 32,
+          "mean": 0.625
+        }
+      },
+      "per_query": [
+        {
+          "query_id": "dev-001",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.09090909090909091,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.6666666666666666,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "General bank SAR activity categories",
+            "Applicable bank SAR conditions/threshold"
+          ],
+          "AI_sufficiency_rationale": "Structuring is one SAR trigger; safe harbor and CTR material do not establish the full suspicious-transaction rule."
+        },
+        {
+          "query_id": "dev-002",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank SAR deadline passage states 30 calendar days after initial detection, the 60-day no-suspect extension, and explains that initial detection is not merely an automated alert. The urgent-notification passage preserves the separate immediate-contact duty."
+        },
+        {
+          "query_id": "dev-003",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.2,
+          "AI_public_mrr": 0.2,
+          "original_anchor_recall_at_20": 0.75,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Aggregation condition"
+          ],
+          "AI_sufficiency_rationale": "The set states the currency threshold and transaction coverage, but the remaining passages concern structuring, corrections, deadline and controls rather than the aggregation rule."
+        },
+        {
+          "query_id": "dev-004",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The prong passage defines control and 25-percent ownership, the overview requires identification/verification, and the legal-entity passage supplies scope/exclusions. These complementary partial passages jointly cover the draft scope."
+        },
+        {
+          "query_id": "dev-005",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.0,
+          "AI_public_mrr": 0.25,
+          "original_anchor_recall_at_20": 0.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Named advisory primary evidence requesting the exact SAR key term"
+          ],
+          "AI_sufficiency_rationale": "Synthetic policy and/or the trend report corroborate the EFE term, and Form 8300 has the same term, but none of these sets contains the named advisory's actual SAR-keyword instruction. Under the declared source-specific scope, corroboration is not a substitute."
+        },
+        {
+          "query_id": "dev-006",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.0,
+          "original_mrr": 0.16666666666666666,
+          "AI_public_mrr": 0.16666666666666666,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Primary SAR-key-term instruction"
+          ],
+          "AI_sufficiency_rationale": "The same mail-theft term appears only in a Form 8300 instruction; this set does not establish the named alert's SAR instruction."
+        },
+        {
+          "query_id": "dev-007",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "All sets include the named advisory's explicit CYBER FIN-2021-A004 request. Preserve the primary passage's literal spelling. A later trend report uses a different hyphenated spelling; human source-page verification is still required before freezing exact-text labels."
+        },
+        {
+          "query_id": "dev-008",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The SDN/50 Percent Rule passage states 50 percent or more, direct or indirect ownership, individually or in aggregate by blocked persons, and applicability even if the entity is not listed."
+        },
+        {
+          "query_id": "dev-009",
+          "original_p_at_5": 0.8,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Participation safeguards required by draft scope"
+          ],
+          "AI_sufficiency_rationale": "The sets support voluntary protected sharing about suspected ML/TF and unlawful proceeds, but do not explain participation safeguards. Vinh should first decide whether that additional scope is required by this broad 'allow' question."
+        },
+        {
+          "query_id": "dev-010",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Jointly, the overview establishes the general and enhanced correspondent-account program, the EDD-trigger and nested/payable-through passages detail enhanced controls, and the ongoing-monitoring passage states risk-based review. This is a joint-evidence judgment, not inferred from any one passage label."
+        },
+        {
+          "query_id": "dev-011",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.125,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Senior management approval",
+            "Enhanced ongoing monitoring",
+            "Full foreign/domestic PEP conditions"
+          ],
+          "AI_sufficiency_rationale": "The sets identify PEPs and provide parts of source-of-funds/wealth diligence but do not enumerate the approval and enhanced-monitoring duties."
+        },
+        {
+          "query_id": "dev-012",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.07142857142857142,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.6666666666666666,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Required originator and beneficiary data fields",
+            "Relevant threshold/unhosted-wallet conditions"
+          ],
+          "AI_sufficiency_rationale": "The sets establish that the travel rule applies to VASPs and some information/transmission obligations. None supplies the complete required field list and relevant conditional treatment. Repeated statements of applicability are not independent additional answer facets. Exact page occurrences and 2021-versus-revised-R16 version scope remain human checks."
+        },
+        {
+          "query_id": "dev-013",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank compliance-program passage explicitly supplies internal controls, independent testing, BSA officer, training, CIP, ongoing CDD and beneficial-owner compliance. The other passages add risk-based implementation context."
+        },
+        {
+          "query_id": "dev-014",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The FinCEN behavioral list directly identifies controlling caregivers, coached/fearful customers, restricted contact, undocumented authority and coerced financial changes. Theft-mechanism evidence complements those signs. Synthetic policy is corroborating only; signs warrant inquiry rather than prove theft."
+        },
+        {
+          "query_id": "dev-015",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.08333333333333333,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets jointly supply altered/crossed-out payees or amounts, whiteout/washed ink, forged signatures and deposition context. Set 0 additionally has the explicit faded-handwriting red flag; the other sets still substantively establish alteration evidence."
+        },
+        {
+          "query_id": "dev-016",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Across each set, trafficking-specific financial methods/indicators and the explicit no-single-red-flag/context caveat are present. Set 3 also contains a smuggling-only list, which is not relied on to establish trafficking; the trafficking advisory supplies the necessary evidence."
+        },
+        {
+          "query_id": "dev-017",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 0.125,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets support deceptive crypto investment persuasion through false legitimacy, fabricated gains, small withdrawals, pressure and/or relationship building. Sets with the full initial-contact passage also establish wrong-number/social/dating recruitment. No inference that every scam uses every tactic is needed."
+        },
+        {
+          "query_id": "dev-018",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.1111111111111111,
+          "AI_public_mrr": 0.2,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The live-verification passage gives concrete observable clues: inconsistent synthetic responses, repeated technical glitches, changing methods and third-party webcam plugins. It supports methods to notice suspected AI identity media, without claiming photo inspection proves AI generation."
+        },
+        {
+          "query_id": "dev-019",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 0.5,
+          "original_anchor_recall_at_20": 0.6666666666666666,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Each set contains direct risk-based monitoring and event-driven customer-information/risk-profile updating evidence. Higher risk justifies closer/more frequent review. VASP periodic-update language is not converted into a universal US bank periodic-update mandate."
+        },
+        {
+          "query_id": "dev-020",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.0,
+          "original_mrr": 0.0,
+          "AI_public_mrr": 0.0,
+          "original_anchor_recall_at_20": 0.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Legal-entity beneficial-owner verification failure response"
+          ],
+          "AI_sufficiency_rationale": "Correspondent-account diligence failure actions do not establish the rule for inability to verify a legal entity customer's beneficial owners; unrelated VASP and laundering passages do not fill the gap."
+        },
+        {
+          "query_id": "dev-021",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Each set includes direct cargo-origin AIS manipulation and false shipping documentation evidence; the voyage cases also show concealed ship-to-ship transfers and false third-country origin. Destination-only and counterparty-only deception is kept distinct."
+        },
+        {
+          "query_id": "dev-022",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.125,
+          "AI_public_mrr": 0.25,
+          "original_anchor_recall_at_20": 0.3333333333333333,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Concrete crypto-company preventive screening/due-diligence controls"
+          ],
+          "AI_sufficiency_rationale": "The set mainly explains sanctions scope, sham arrangements and what to do after crypto is known to be blocked. It does not sufficiently show how the company identifies and prevents blocked-person dealings."
+        },
+        {
+          "query_id": "dev-023",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.2,
+          "AI_public_mrr": 0.3333333333333333,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sham-transaction advisory directly explains paper-only transfers through proxies/opaque structures while the blocked person's practical economic interest continues. Additional CRE and trust material is not required to infer the basic mechanism."
+        },
+        {
+          "query_id": "dev-024",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 0.5,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "How AML-program tester independence is maintained"
+          ],
+          "AI_sufficiency_rationale": "The bank BSA program permits bank personnel or an outside party to perform independent testing. It does not state the required separation/conflict safeguards. OFAC-program audit text is not silently substituted for BSA AML-program independence requirements."
+        },
+        {
+          "query_id": "dev-025",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.0,
+          "AI_public_mrr": 0.5,
+          "original_anchor_recall_at_20": 0.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Concrete channels used to market services to criminal clients"
+          ],
+          "AI_sufficiency_rationale": "The sets describe professional laundering services, menus, fees and some no-questions-asked claims, but do not give the direct word-of-mouth/Dark Web client-marketing channels required by the draft scope. Advertising evidence elsewhere in the reviewed pool is not part of these five-passage sets."
+        },
+        {
+          "query_id": "dev-026",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The CRE vulnerability passage directly connects foreign investors, offshore legal-entity layers, many investors/ownership thresholds, complex financing and stable high-value returns. Residential-rule passages are not needed or substituted."
+        },
+        {
+          "query_id": "dev-027",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The primary ransomware advisory supplies CYBER FIN-2021-A004 and the bank manual supplies 30 calendar days plus the no-suspect extension and detection conditions. The secondary hyphenated spelling is flagged for human source verification, not silently normalized."
+        },
+        {
+          "query_id": "dev-028",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.25,
+          "AI_public_mrr": 0.3333333333333333,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Primary regulatory evidence for bank SAR deadline"
+          ],
+          "AI_sufficiency_rationale": "Chưa đủ: thời hạn SAR chỉ nằm trong policy giả lập. Bộ này chưa chứng minh thời hạn pháp lý chung của ngân hàng bằng nguồn có thẩm quyền; phần OFAC vẫn có evidence. Đây là false của cả bộ, không phải mọi passage đều vô ích."
+        },
+        {
+          "query_id": "dev-029",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 0.25,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets jointly cover concrete behavioral or theft-transaction indicators, the no-single-flag limitation and adult-child/caregiver findings. Historical 46-percent family findings are kept distinct from the newer nearly-40-percent adult-child theft sample; theft findings are not presented as all EFE."
+        },
+        {
+          "query_id": "dev-030",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Đủ theo cách đọc sát câu hỏi, không tự thêm một giai đoạn năm chưa được nêu: bộ có xu hướng theo tháng của mail-theft-related filings năm 2023 và red flags. Không được viết rằng mail-theft filings tăng gấp đôi; số gần gấp đôi thuộc toàn bộ check fraud."
+        },
+        {
+          "query_id": "dev-031",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 0.5,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank CDD/update passages provide ongoing monitoring, risk-based information maintenance and updating beyond BO identification. Repeated identity/prong passages do not add separate ongoing-duty evidence or inflate sufficiency."
+        },
+        {
+          "query_id": "dev-032",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Đủ theo cách hiểu lịch sử của “What risk did FinCEN see”: các đoạn cùng nêu rủi ro che giấu danh tính/né sanctions và biện pháp xác minh. Phải ghi là nhận định trong advisory lịch sử đã bị rescinded, không trình bày như khuyến cáo hiện hành."
+        }
+      ]
+    },
+    "dense": {
+      "aggregate": {
+        "original_p_at_5": {
+          "mean": 0.18125,
+          "ci95": [
+            0.11875,
+            0.25625000000000003
+          ]
+        },
+        "AI_public_p_at_5": {
+          "mean": 0.53125,
+          "ci95": [
+            0.425,
+            0.6375
+          ]
+        },
+        "original_mrr": {
+          "mean": 0.49183991304855273,
+          "ci95": [
+            0.33766376342203547,
+            0.6510693860877684
+          ]
+        },
+        "AI_public_mrr": {
+          "mean": 0.8034142634326458,
+          "ci95": [
+            0.6718411796536796,
+            0.9109291443850267
+          ]
+        },
+        "original_anchor_recall_at_20": {
+          "mean": 0.7413194444444444,
+          "ci95": [
+            0.6128472222222222,
+            0.8506944444444444
+          ]
+        },
+        "paired_label_delta_p_at_5": {
+          "n": 32,
+          "mean_delta": 0.35000000000000003,
+          "ci95": [
+            0.25,
+            0.45
+          ]
+        },
+        "paired_label_delta_mrr": {
+          "n": 32,
+          "mean_delta": 0.31157435038409304,
+          "ci95": [
+            0.16821056547619048,
+            0.4514012896825397
+          ]
+        },
+        "AI_evidence_sufficiency_at_5": {
+          "true": 19,
+          "false": 13,
+          "unknown": 0,
+          "denominator": 32,
+          "mean": 0.59375
+        }
+      },
+      "per_query": [
+        {
+          "query_id": "dev-001",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.0,
+          "original_mrr": 0.0,
+          "AI_public_mrr": 0.09090909090909091,
+          "original_anchor_recall_at_20": 0.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Bank SAR reportable activities",
+            "Applicable bank SAR conditions/threshold"
+          ],
+          "AI_sufficiency_rationale": "The set primarily supplies CTR requirements and section references, not the requested SAR rule."
+        },
+        {
+          "query_id": "dev-002",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank SAR deadline passage states 30 calendar days after initial detection, the 60-day no-suspect extension, and explains that initial detection is not merely an automated alert. The urgent-notification passage preserves the separate immediate-contact duty."
+        },
+        {
+          "query_id": "dev-003",
+          "original_p_at_5": 1.0,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The CTR passages jointly state more than $10,000 in currency, covered deposits/withdrawals/transfers, and aggregation. The bank manual also supplies the exempt-person qualification."
+        },
+        {
+          "query_id": "dev-004",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.07142857142857142,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.3333333333333333,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Ownership and control prong definitions"
+          ],
+          "AI_sufficiency_rationale": "Identification, verification and legal-entity scope are present, but these sets do not define both the 25-percent ownership prong and the control prong."
+        },
+        {
+          "query_id": "dev-005",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.0,
+          "original_mrr": 0.0,
+          "AI_public_mrr": 0.0,
+          "original_anchor_recall_at_20": 0.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Named advisory primary evidence requesting the exact SAR key term"
+          ],
+          "AI_sufficiency_rationale": "Synthetic policy and/or the trend report corroborate the EFE term, and Form 8300 has the same term, but none of these sets contains the named advisory's actual SAR-keyword instruction. Under the declared source-specific scope, corroboration is not a substitute."
+        },
+        {
+          "query_id": "dev-006",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The named mail-theft alert explicitly requests FIN-2023-MAILTHEFT in SAR field 2 and the narrative. Other filing terms do not change that direct instruction."
+        },
+        {
+          "query_id": "dev-007",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.2,
+          "AI_public_mrr": 0.25,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "All sets include the named advisory's explicit CYBER FIN-2021-A004 request. Preserve the primary passage's literal spelling. A later trend report uses a different hyphenated spelling; human source-page verification is still required before freezing exact-text labels."
+        },
+        {
+          "query_id": "dev-008",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.0,
+          "original_mrr": 0.058823529411764705,
+          "AI_public_mrr": 0.058823529411764705,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "50-percent threshold",
+            "Aggregate blocked ownership",
+            "Direct/indirect ownership scope"
+          ],
+          "AI_sufficiency_rationale": "These passages discuss sanctions programs, licenses, general controls and reporting; they do not state the 50 Percent Rule."
+        },
+        {
+          "query_id": "dev-009",
+          "original_p_at_5": 0.6,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 0.3333333333333333,
+          "original_anchor_recall_at_20": 0.8888888888888888,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Participation safeguards required by draft scope"
+          ],
+          "AI_sufficiency_rationale": "The sets support voluntary protected sharing about suspected ML/TF and unlawful proceeds, but do not explain participation safeguards. Vinh should first decide whether that additional scope is required by this broad 'allow' question."
+        },
+        {
+          "query_id": "dev-010",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The 1010.610 program passage supplies covered correspondent accounts, EDD determination, risk assessment factors, controls, suspicious-activity detection/reporting and periodic consistency review."
+        },
+        {
+          "query_id": "dev-011",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.1111111111111111,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.6666666666666666,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Senior management approval",
+            "Enhanced ongoing monitoring",
+            "Full foreign/domestic PEP conditions"
+          ],
+          "AI_sufficiency_rationale": "The sets identify PEPs and provide parts of source-of-funds/wealth diligence but do not enumerate the approval and enhanced-monitoring duties."
+        },
+        {
+          "query_id": "dev-012",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.3333333333333333,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Required originator and beneficiary data fields",
+            "Relevant threshold/unhosted-wallet conditions"
+          ],
+          "AI_sufficiency_rationale": "The sets establish that the travel rule applies to VASPs and some information/transmission obligations. None supplies the complete required field list and relevant conditional treatment. Repeated statements of applicability are not independent additional answer facets. Exact page occurrences and 2021-versus-revised-R16 version scope remain human checks."
+        },
+        {
+          "query_id": "dev-013",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank compliance-program passage explicitly supplies internal controls, independent testing, BSA officer, training, CIP, ongoing CDD and beneficial-owner compliance. The other passages add risk-based implementation context."
+        },
+        {
+          "query_id": "dev-014",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The FinCEN behavioral list directly identifies controlling caregivers, coached/fearful customers, restricted contact, undocumented authority and coerced financial changes. Theft-mechanism evidence complements those signs. Synthetic policy is corroborating only; signs warrant inquiry rather than prove theft."
+        },
+        {
+          "query_id": "dev-015",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 0.25,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets jointly supply altered/crossed-out payees or amounts, whiteout/washed ink, forged signatures and deposition context. Set 0 additionally has the explicit faded-handwriting red flag; the other sets still substantively establish alteration evidence."
+        },
+        {
+          "query_id": "dev-016",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Across each set, trafficking-specific financial methods/indicators and the explicit no-single-red-flag/context caveat are present. Set 3 also contains a smuggling-only list, which is not relied on to establish trafficking; the trafficking advisory supplies the necessary evidence."
+        },
+        {
+          "query_id": "dev-017",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 0.058823529411764705,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets support deceptive crypto investment persuasion through false legitimacy, fabricated gains, small withdrawals, pressure and/or relationship building. Sets with the full initial-contact passage also establish wrong-number/social/dating recruitment. No inference that every scam uses every tactic is needed."
+        },
+        {
+          "query_id": "dev-018",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.1111111111111111,
+          "AI_public_mrr": 0.5,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The detection passage supplies identity-document rereview, reverse-image matches to generated-face galleries, metadata/software checks and inconsistencies, while explicitly warning the signals are not conclusive. Set 0 also has the direct red-flag list."
+        },
+        {
+          "query_id": "dev-019",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Each set contains direct risk-based monitoring and event-driven customer-information/risk-profile updating evidence. Higher risk justifies closer/more frequent review. VASP periodic-update language is not converted into a universal US bank periodic-update mandate."
+        },
+        {
+          "query_id": "dev-020",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The beneficial-owner manual lists policy-defined nonopening, interim account use, closure after failed verification, and SAR consideration under applicable law. It does not mandate automatic SAR filing for every identification failure."
+        },
+        {
+          "query_id": "dev-021",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.6666666666666666,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Each set includes direct cargo-origin AIS manipulation and false shipping documentation evidence; the voyage cases also show concealed ship-to-ship transfers and false third-country origin. Destination-only and counterparty-only deception is kept distinct."
+        },
+        {
+          "query_id": "dev-022",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.08333333333333333,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.3333333333333333,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets jointly supply concrete crypto controls: customer/counterparty or wallet screening, geolocation/IP/VPN checks or blockchain lookbacks, sanctions monitoring and blocking/holding access. Each can support an actionable controls answer; not every recommended control is claimed mandatory."
+        },
+        {
+          "query_id": "dev-023",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sham-transaction advisory directly explains paper-only transfers through proxies/opaque structures while the blocked person's practical economic interest continues. Additional CRE and trust material is not required to infer the basic mechanism."
+        },
+        {
+          "query_id": "dev-024",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.0,
+          "original_mrr": 0.1111111111111111,
+          "AI_public_mrr": 0.14285714285714285,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Eligible bank AML-program testers",
+            "How their independence is maintained"
+          ],
+          "AI_sufficiency_rationale": "Correspondent examination procedures and an OFAC audit passage do not establish the requested bank AML-program tester scope and independence safeguards."
+        },
+        {
+          "query_id": "dev-025",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Concrete channels used to market services to criminal clients"
+          ],
+          "AI_sufficiency_rationale": "The sets describe professional laundering services, menus, fees and some no-questions-asked claims, but do not give the direct word-of-mouth/Dark Web client-marketing channels required by the draft scope. Advertising evidence elsewhere in the reviewed pool is not part of these five-passage sets."
+        },
+        {
+          "query_id": "dev-026",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.0625,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Explicit foreign-buyer CRE structural-risk link"
+          ],
+          "AI_sufficiency_rationale": "The set has general corruption and a CRE opacity description, but the prominent real-estate reporting passages concern residential transfers. It does not adequately establish the foreign-buyer CRE-specific connection without extrapolation."
+        },
+        {
+          "query_id": "dev-027",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.2,
+          "AI_public_mrr": 0.3333333333333333,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Exact ransomware advisory SAR key term"
+          ],
+          "AI_sufficiency_rationale": "The bank SAR deadline and urgent ransomware notification are supported. None of these sets states the ransomware advisory key term; the Russia/human-smuggling keywords cannot substitute."
+        },
+        {
+          "query_id": "dev-028",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Public OFAC passages state 10 business days from blocking, and the bank SAR manual states 30 calendar days from initial detection with the no-suspect extension. The distinct triggering events and day units are preserved."
+        },
+        {
+          "query_id": "dev-029",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.14285714285714285,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Concrete FinCEN EFE red flags"
+          ],
+          "AI_sufficiency_rationale": "Perpetrator findings, aggregate amounts and report background do not supply the requested behavioral/financial indicator list."
+        },
+        {
+          "query_id": "dev-030",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Change in BSA/SAR filing counts over time"
+          ],
+          "AI_sufficiency_rationale": "The set gives a review-period mail-theft total, fraud methods and red flags. The comparative increase is in postal mail-theft complaints, not BSA/SAR filings, and must not substitute."
+        },
+        {
+          "query_id": "dev-031",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.1111111111111111,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank CDD/update passages provide ongoing monitoring, risk-based information maintenance and updating beyond BO identification. Repeated identity/prong passages do not add separate ongoing-duty evidence or inflate sufficiency."
+        },
+        {
+          "query_id": "dev-032",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Đủ theo cách hiểu lịch sử của “What risk did FinCEN see”: các đoạn cùng nêu rủi ro che giấu danh tính/né sanctions và biện pháp xác minh. Phải ghi là nhận định trong advisory lịch sử đã bị rescinded, không trình bày như khuyến cáo hiện hành."
+        }
+      ]
+    },
+    "hybrid": {
+      "aggregate": {
+        "original_p_at_5": {
+          "mean": 0.2,
+          "ci95": [
+            0.14375000000000002,
+            0.2625
+          ]
+        },
+        "AI_public_p_at_5": {
+          "mean": 0.5625,
+          "ci95": [
+            0.46875,
+            0.65625
+          ]
+        },
+        "original_mrr": {
+          "mean": 0.5347699175824175,
+          "ci95": [
+            0.3944654304029304,
+            0.6700892857142857
+          ]
+        },
+        "AI_public_mrr": {
+          "mean": 0.8159455128205129,
+          "ci95": [
+            0.6905448717948718,
+            0.9192708333333334
+          ]
+        },
+        "original_anchor_recall_at_20": {
+          "mean": 0.8346354166666666,
+          "ci95": [
+            0.7213541666666666,
+            0.9296875
+          ]
+        },
+        "paired_label_delta_p_at_5": {
+          "n": 32,
+          "mean_delta": 0.3625,
+          "ci95": [
+            0.25625,
+            0.4625
+          ]
+        },
+        "paired_label_delta_mrr": {
+          "n": 32,
+          "mean_delta": 0.28117559523809527,
+          "ci95": [
+            0.15625,
+            0.4110119047619048
+          ]
+        },
+        "AI_evidence_sufficiency_at_5": {
+          "true": 21,
+          "false": 11,
+          "unknown": 0,
+          "denominator": 32,
+          "mean": 0.65625
+        }
+      },
+      "per_query": [
+        {
+          "query_id": "dev-001",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.0,
+          "original_mrr": 0.07692307692307693,
+          "AI_public_mrr": 0.07692307692307693,
+          "original_anchor_recall_at_20": 0.6666666666666666,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Bank SAR reportable activities",
+            "Applicable bank SAR conditions/threshold"
+          ],
+          "AI_sufficiency_rationale": "The set primarily supplies CTR requirements and section references, not the requested SAR rule."
+        },
+        {
+          "query_id": "dev-002",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank SAR deadline passage states 30 calendar days after initial detection, the 60-day no-suspect extension, and explains that initial detection is not merely an automated alert. The urgent-notification passage preserves the separate immediate-contact duty."
+        },
+        {
+          "query_id": "dev-003",
+          "original_p_at_5": 0.8,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.875,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The CTR passages jointly state more than $10,000 in currency, covered deposits/withdrawals/transfers, and aggregation. The bank manual also supplies the exempt-person qualification."
+        },
+        {
+          "query_id": "dev-004",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.14285714285714285,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Ownership and control prong definitions"
+          ],
+          "AI_sufficiency_rationale": "Identification, verification and legal-entity scope are present, but these sets do not define both the 25-percent ownership prong and the control prong."
+        },
+        {
+          "query_id": "dev-005",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.0,
+          "original_mrr": 0.0,
+          "AI_public_mrr": 0.0,
+          "original_anchor_recall_at_20": 0.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Named advisory primary evidence requesting the exact SAR key term"
+          ],
+          "AI_sufficiency_rationale": "Synthetic policy and/or the trend report corroborate the EFE term, and Form 8300 has the same term, but none of these sets contains the named advisory's actual SAR-keyword instruction. Under the declared source-specific scope, corroboration is not a substitute."
+        },
+        {
+          "query_id": "dev-006",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The named mail-theft alert explicitly requests FIN-2023-MAILTHEFT in SAR field 2 and the narrative. Other filing terms do not change that direct instruction."
+        },
+        {
+          "query_id": "dev-007",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "All sets include the named advisory's explicit CYBER FIN-2021-A004 request. Preserve the primary passage's literal spelling. A later trend report uses a different hyphenated spelling; human source-page verification is still required before freezing exact-text labels."
+        },
+        {
+          "query_id": "dev-008",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 0.3333333333333333,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The SDN/50 Percent Rule passage states 50 percent or more, direct or indirect ownership, individually or in aggregate by blocked persons, and applicability even if the entity is not listed."
+        },
+        {
+          "query_id": "dev-009",
+          "original_p_at_5": 0.6,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 0.5,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Participation safeguards required by draft scope"
+          ],
+          "AI_sufficiency_rationale": "The sets support voluntary protected sharing about suspected ML/TF and unlawful proceeds, but do not explain participation safeguards. Vinh should first decide whether that additional scope is required by this broad 'allow' question."
+        },
+        {
+          "query_id": "dev-010",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The 1010.610 program passage supplies covered correspondent accounts, EDD determination, risk assessment factors, controls, suspicious-activity detection/reporting and periodic consistency review."
+        },
+        {
+          "query_id": "dev-011",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.6666666666666666,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Recommendation 12 itself provides identification, senior management approval, source of wealth/funds, enhanced monitoring, higher-risk domestic/international-organization treatment, and family/close-associate coverage."
+        },
+        {
+          "query_id": "dev-012",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.3333333333333333,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Required originator and beneficiary data fields",
+            "Relevant threshold/unhosted-wallet conditions"
+          ],
+          "AI_sufficiency_rationale": "The sets establish that the travel rule applies to VASPs and some information/transmission obligations. None supplies the complete required field list and relevant conditional treatment. Repeated statements of applicability are not independent additional answer facets. Exact page occurrences and 2021-versus-revised-R16 version scope remain human checks."
+        },
+        {
+          "query_id": "dev-013",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank compliance-program passage explicitly supplies internal controls, independent testing, BSA officer, training, CIP, ongoing CDD and beneficial-owner compliance. The other passages add risk-based implementation context."
+        },
+        {
+          "query_id": "dev-014",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The FinCEN behavioral list directly identifies controlling caregivers, coached/fearful customers, restricted contact, undocumented authority and coerced financial changes. Theft-mechanism evidence complements those signs. Synthetic policy is corroborating only; signs warrant inquiry rather than prove theft."
+        },
+        {
+          "query_id": "dev-015",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.16666666666666666,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets jointly supply altered/crossed-out payees or amounts, whiteout/washed ink, forged signatures and deposition context. Set 0 additionally has the explicit faded-handwriting red flag; the other sets still substantively establish alteration evidence."
+        },
+        {
+          "query_id": "dev-016",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Across each set, trafficking-specific financial methods/indicators and the explicit no-single-red-flag/context caveat are present. Set 3 also contains a smuggling-only list, which is not relied on to establish trafficking; the trafficking advisory supplies the necessary evidence."
+        },
+        {
+          "query_id": "dev-017",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 0.1,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets support deceptive crypto investment persuasion through false legitimacy, fabricated gains, small withdrawals, pressure and/or relationship building. Sets with the full initial-contact passage also establish wrong-number/social/dating recruitment. No inference that every scam uses every tactic is needed."
+        },
+        {
+          "query_id": "dev-018",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.14285714285714285,
+          "AI_public_mrr": 0.25,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The detection passage supplies identity-document rereview, reverse-image matches to generated-face galleries, metadata/software checks and inconsistencies, while explicitly warning the signals are not conclusive. Set 0 also has the direct red-flag list."
+        },
+        {
+          "query_id": "dev-019",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Each set contains direct risk-based monitoring and event-driven customer-information/risk-profile updating evidence. Higher risk justifies closer/more frequent review. VASP periodic-update language is not converted into a universal US bank periodic-update mandate."
+        },
+        {
+          "query_id": "dev-020",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.2,
+          "AI_public_mrr": 0.2,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The beneficial-owner manual lists policy-defined nonopening, interim account use, closure after failed verification, and SAR consideration under applicable law. It does not mandate automatic SAR filing for every identification failure."
+        },
+        {
+          "query_id": "dev-021",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Each set includes direct cargo-origin AIS manipulation and false shipping documentation evidence; the voyage cases also show concealed ship-to-ship transfers and false third-country origin. Destination-only and counterparty-only deception is kept distinct."
+        },
+        {
+          "query_id": "dev-022",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.6666666666666666,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets jointly supply concrete crypto controls: customer/counterparty or wallet screening, geolocation/IP/VPN checks or blockchain lookbacks, sanctions monitoring and blocking/holding access. Each can support an actionable controls answer; not every recommended control is claimed mandatory."
+        },
+        {
+          "query_id": "dev-023",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sham-transaction advisory directly explains paper-only transfers through proxies/opaque structures while the blocked person's practical economic interest continues. Additional CRE and trust material is not required to infer the basic mechanism."
+        },
+        {
+          "query_id": "dev-024",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.25,
+          "AI_public_mrr": 0.25,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "How AML-program tester independence is maintained"
+          ],
+          "AI_sufficiency_rationale": "The bank BSA program permits bank personnel or an outside party to perform independent testing. It does not state the required separation/conflict safeguards. OFAC-program audit text is not silently substituted for BSA AML-program independence requirements."
+        },
+        {
+          "query_id": "dev-025",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Concrete channels used to market services to criminal clients"
+          ],
+          "AI_sufficiency_rationale": "The sets describe professional laundering services, menus, fees and some no-questions-asked claims, but do not give the direct word-of-mouth/Dark Web client-marketing channels required by the draft scope. Advertising evidence elsewhere in the reviewed pool is not part of these five-passage sets."
+        },
+        {
+          "query_id": "dev-026",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.2,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The CRE vulnerability passage directly connects foreign investors, offshore legal-entity layers, many investors/ownership thresholds, complex financing and stable high-value returns. Residential-rule passages are not needed or substituted."
+        },
+        {
+          "query_id": "dev-027",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Exact ransomware advisory SAR key term"
+          ],
+          "AI_sufficiency_rationale": "The bank SAR deadline and urgent ransomware notification are supported. None of these sets states the ransomware advisory key term; the Russia/human-smuggling keywords cannot substitute."
+        },
+        {
+          "query_id": "dev-028",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Primary regulatory evidence for bank SAR deadline"
+          ],
+          "AI_sufficiency_rationale": "Chưa đủ: thời hạn SAR chỉ nằm trong policy giả lập. Bộ này chưa chứng minh thời hạn pháp lý chung của ngân hàng bằng nguồn có thẩm quyền; phần OFAC vẫn có evidence. Đây là false của cả bộ, không phải mọi passage đều vô ích."
+        },
+        {
+          "query_id": "dev-029",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.25,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Concrete FinCEN EFE red flags"
+          ],
+          "AI_sufficiency_rationale": "The set supplies adult-child/caregiver prevalence and contextual caveats, but only introduces red flags rather than listing concrete actionable ones."
+        },
+        {
+          "query_id": "dev-030",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Change in BSA/SAR filing counts over time"
+          ],
+          "AI_sufficiency_rationale": "The set gives a review-period mail-theft total, fraud methods and red flags. The comparative increase is in postal mail-theft complaints, not BSA/SAR filings, and must not substitute."
+        },
+        {
+          "query_id": "dev-031",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.25,
+          "AI_public_mrr": 0.5,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank CDD/update passages provide ongoing monitoring, risk-based information maintenance and updating beyond BO identification. Repeated identity/prong passages do not add separate ongoing-duty evidence or inflate sufficiency."
+        },
+        {
+          "query_id": "dev-032",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Đủ theo cách hiểu lịch sử của “What risk did FinCEN see”: các đoạn cùng nêu rủi ro che giấu danh tính/né sanctions và biện pháp xác minh. Phải ghi là nhận định trong advisory lịch sử đã bị rescinded, không trình bày như khuyến cáo hiện hành."
+        }
+      ]
+    },
+    "reranked": {
+      "aggregate": {
+        "original_p_at_5": {
+          "mean": 0.21875,
+          "ci95": [
+            0.15000000000000002,
+            0.30625
+          ]
+        },
+        "AI_public_p_at_5": {
+          "mean": 0.625,
+          "ci95": [
+            0.525,
+            0.71875
+          ]
+        },
+        "original_mrr": {
+          "mean": 0.4826257076257076,
+          "ci95": [
+            0.36709800616050614,
+            0.6091044372294372
+          ]
+        },
+        "AI_public_mrr": {
+          "mean": 0.85,
+          "ci95": [
+            0.740625,
+            0.9322916666666666
+          ]
+        },
+        "original_anchor_recall_at_20": {
+          "mean": 0.8346354166666666,
+          "ci95": [
+            0.7213541666666666,
+            0.9296875
+          ]
+        },
+        "paired_label_delta_p_at_5": {
+          "n": 32,
+          "mean_delta": 0.40625,
+          "ci95": [
+            0.30625,
+            0.50625
+          ]
+        },
+        "paired_label_delta_mrr": {
+          "n": 32,
+          "mean_delta": 0.36737429237429237,
+          "ci95": [
+            0.2316735347985348,
+            0.49015151515151517
+          ]
+        },
+        "AI_evidence_sufficiency_at_5": {
+          "true": 22,
+          "false": 10,
+          "unknown": 0,
+          "denominator": 32,
+          "mean": 0.6875
+        }
+      },
+      "per_query": [
+        {
+          "query_id": "dev-001",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 0.3333333333333333,
+          "original_anchor_recall_at_20": 0.6666666666666666,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Applicable bank SAR monetary threshold/conditions"
+          ],
+          "AI_sufficiency_rationale": "Activity categories are supported by the advisory passages, but the set does not state the bank-specific monetary condition. CTR thresholds cannot substitute."
+        },
+        {
+          "query_id": "dev-002",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank SAR deadline passage states 30 calendar days after initial detection, the 60-day no-suspect extension, and explains that initial detection is not merely an automated alert. The urgent-notification passage preserves the separate immediate-contact duty."
+        },
+        {
+          "query_id": "dev-003",
+          "original_p_at_5": 1.0,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.875,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The CTR passages jointly state more than $10,000 in currency, covered deposits/withdrawals/transfers, and aggregation. The bank manual also supplies the exempt-person qualification."
+        },
+        {
+          "query_id": "dev-004",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Ownership and control prong definitions"
+          ],
+          "AI_sufficiency_rationale": "Identification, verification and legal-entity scope are present, but these sets do not define both the 25-percent ownership prong and the control prong."
+        },
+        {
+          "query_id": "dev-005",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.0,
+          "original_mrr": 0.0,
+          "AI_public_mrr": 0.0,
+          "original_anchor_recall_at_20": 0.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Named advisory primary evidence requesting the exact SAR key term"
+          ],
+          "AI_sufficiency_rationale": "Synthetic policy and/or the trend report corroborate the EFE term, and Form 8300 has the same term, but none of these sets contains the named advisory's actual SAR-keyword instruction. Under the declared source-specific scope, corroboration is not a substitute."
+        },
+        {
+          "query_id": "dev-006",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.2,
+          "AI_public_mrr": 0.2,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The named mail-theft alert explicitly requests FIN-2023-MAILTHEFT in SAR field 2 and the narrative. Other filing terms do not change that direct instruction."
+        },
+        {
+          "query_id": "dev-007",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "All sets include the named advisory's explicit CYBER FIN-2021-A004 request. Preserve the primary passage's literal spelling. A later trend report uses a different hyphenated spelling; human source-page verification is still required before freezing exact-text labels."
+        },
+        {
+          "query_id": "dev-008",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 0.3333333333333333,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The SDN/50 Percent Rule passage states 50 percent or more, direct or indirect ownership, individually or in aggregate by blocked persons, and applicability even if the entity is not listed."
+        },
+        {
+          "query_id": "dev-009",
+          "original_p_at_5": 1.0,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Participation safeguards required by draft scope"
+          ],
+          "AI_sufficiency_rationale": "The sets support voluntary protected sharing about suspected ML/TF and unlawful proceeds, but do not explain participation safeguards. Vinh should first decide whether that additional scope is required by this broad 'allow' question."
+        },
+        {
+          "query_id": "dev-010",
+          "original_p_at_5": 0.4,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The 1010.610 program passage supplies covered correspondent accounts, EDD determination, risk assessment factors, controls, suspicious-activity detection/reporting and periodic consistency review."
+        },
+        {
+          "query_id": "dev-011",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.07692307692307693,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.6666666666666666,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Senior management approval",
+            "Enhanced ongoing monitoring",
+            "Full foreign/domestic PEP conditions"
+          ],
+          "AI_sufficiency_rationale": "The sets identify PEPs and provide parts of source-of-funds/wealth diligence but do not enumerate the approval and enhanced-monitoring duties."
+        },
+        {
+          "query_id": "dev-012",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.16666666666666666,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.3333333333333333,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Required originator and beneficiary data fields",
+            "Relevant threshold/unhosted-wallet conditions"
+          ],
+          "AI_sufficiency_rationale": "The sets establish that the travel rule applies to VASPs and some information/transmission obligations. None supplies the complete required field list and relevant conditional treatment. Repeated statements of applicability are not independent additional answer facets. Exact page occurrences and 2021-versus-revised-R16 version scope remain human checks."
+        },
+        {
+          "query_id": "dev-013",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank compliance-program passage explicitly supplies internal controls, independent testing, BSA officer, training, CIP, ongoing CDD and beneficial-owner compliance. The other passages add risk-based implementation context."
+        },
+        {
+          "query_id": "dev-014",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The FinCEN behavioral list directly identifies controlling caregivers, coached/fearful customers, restricted contact, undocumented authority and coerced financial changes. Theft-mechanism evidence complements those signs. Synthetic policy is corroborating only; signs warrant inquiry rather than prove theft."
+        },
+        {
+          "query_id": "dev-015",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 0.2,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets jointly supply altered/crossed-out payees or amounts, whiteout/washed ink, forged signatures and deposition context. Set 0 additionally has the explicit faded-handwriting red flag; the other sets still substantively establish alteration evidence."
+        },
+        {
+          "query_id": "dev-016",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.16666666666666666,
+          "AI_public_mrr": 0.5,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Across each set, trafficking-specific financial methods/indicators and the explicit no-single-red-flag/context caveat are present. Set 3 also contains a smuggling-only list, which is not relied on to establish trafficking; the trafficking advisory supplies the necessary evidence."
+        },
+        {
+          "query_id": "dev-017",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 0.14285714285714285,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets support deceptive crypto investment persuasion through false legitimacy, fabricated gains, small withdrawals, pressure and/or relationship building. Sets with the full initial-contact passage also establish wrong-number/social/dating recruitment. No inference that every scam uses every tactic is needed."
+        },
+        {
+          "query_id": "dev-018",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.2,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The detection passage supplies identity-document rereview, reverse-image matches to generated-face galleries, metadata/software checks and inconsistencies, while explicitly warning the signals are not conclusive. Set 0 also has the direct red-flag list."
+        },
+        {
+          "query_id": "dev-019",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Each set contains direct risk-based monitoring and event-driven customer-information/risk-profile updating evidence. Higher risk justifies closer/more frequent review. VASP periodic-update language is not converted into a universal US bank periodic-update mandate."
+        },
+        {
+          "query_id": "dev-020",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.2,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 0.5,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The beneficial-owner manual lists policy-defined nonopening, interim account use, closure after failed verification, and SAR consideration under applicable law. It does not mandate automatic SAR filing for every identification failure."
+        },
+        {
+          "query_id": "dev-021",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Each set includes direct cargo-origin AIS manipulation and false shipping documentation evidence; the voyage cases also show concealed ship-to-ship transfers and false third-country origin. Destination-only and counterparty-only deception is kept distinct."
+        },
+        {
+          "query_id": "dev-022",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.09090909090909091,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.6666666666666666,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets jointly supply concrete crypto controls: customer/counterparty or wallet screening, geolocation/IP/VPN checks or blockchain lookbacks, sanctions monitoring and blocking/holding access. Each can support an actionable controls answer; not every recommended control is claimed mandatory."
+        },
+        {
+          "query_id": "dev-023",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.5,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sham-transaction advisory directly explains paper-only transfers through proxies/opaque structures while the blocked person's practical economic interest continues. Additional CRE and trust material is not required to infer the basic mechanism."
+        },
+        {
+          "query_id": "dev-024",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 0.3333333333333333,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "How AML-program tester independence is maintained"
+          ],
+          "AI_sufficiency_rationale": "The bank BSA program permits bank personnel or an outside party to perform independent testing. It does not state the required separation/conflict safeguards. OFAC-program audit text is not silently substituted for BSA AML-program independence requirements."
+        },
+        {
+          "query_id": "dev-025",
+          "original_p_at_5": 0.0,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 0.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 0.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Concrete channels used to market services to criminal clients"
+          ],
+          "AI_sufficiency_rationale": "The sets describe professional laundering services, menus, fees and some no-questions-asked claims, but do not give the direct word-of-mouth/Dark Web client-marketing channels required by the draft scope. Advertising evidence elsewhere in the reviewed pool is not part of these five-passage sets."
+        },
+        {
+          "query_id": "dev-026",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.3333333333333333,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The CRE vulnerability passage directly connects foreign investors, offshore legal-entity layers, many investors/ownership thresholds, complex financing and stable high-value returns. Residential-rule passages are not needed or substituted."
+        },
+        {
+          "query_id": "dev-027",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.25,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "Exact ransomware advisory SAR key term"
+          ],
+          "AI_sufficiency_rationale": "The bank SAR deadline and urgent ransomware notification are supported. None of these sets states the ransomware advisory key term; the Russia/human-smuggling keywords cannot substitute."
+        },
+        {
+          "query_id": "dev-028",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.5,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": false,
+          "AI_missing_facets": [
+            "SAR initial-filing deadline and conditions"
+          ],
+          "AI_sufficiency_rationale": "OFAC reporting is present, but no passage gives the ordinary bank SAR initial-filing deadline. Separate SAR duties do not establish a deadline."
+        },
+        {
+          "query_id": "dev-029",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 1.0,
+          "original_mrr": 0.25,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The sets jointly cover concrete behavioral or theft-transaction indicators, the no-single-flag limitation and adult-child/caregiver findings. Historical 46-percent family findings are kept distinct from the newer nearly-40-percent adult-child theft sample; theft findings are not presented as all EFE."
+        },
+        {
+          "query_id": "dev-030",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.8,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Đủ theo cách đọc sát câu hỏi, không tự thêm một giai đoạn năm chưa được nêu: bộ có xu hướng theo tháng của mail-theft-related filings năm 2023 và red flags. Không được viết rằng mail-theft filings tăng gấp đôi; số gần gấp đôi thuộc toàn bộ check fraud."
+        },
+        {
+          "query_id": "dev-031",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.6,
+          "original_mrr": 0.2,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "The bank CDD/update passages provide ongoing monitoring, risk-based information maintenance and updating beyond BO identification. Repeated identity/prong passages do not add separate ongoing-duty evidence or inflate sufficiency."
+        },
+        {
+          "query_id": "dev-032",
+          "original_p_at_5": 0.2,
+          "AI_public_p_at_5": 0.4,
+          "original_mrr": 1.0,
+          "AI_public_mrr": 1.0,
+          "original_anchor_recall_at_20": 1.0,
+          "AI_anchor_recall_at_20": null,
+          "AI_sufficient": true,
+          "AI_missing_facets": [],
+          "AI_sufficiency_rationale": "Đủ theo cách hiểu lịch sử của “What risk did FinCEN see”: các đoạn cùng nêu rủi ro che giấu danh tính/né sanctions và biện pháp xác minh. Phải ghi là nhận định trong advisory lịch sử đã bị rescinded, không trình bày như khuyến cáo hiện hành."
+        }
+      ]
+    }
+  }
+}
