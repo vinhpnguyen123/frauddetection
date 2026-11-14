@@ -30,6 +30,19 @@ CountTokens = Callable[[list[str]], Awaitable[list[int]]]
 
 
 @dataclass(frozen=True)
+class ChunkConfig:
+    """Sizes in tokens. `per_paragraph` starts a new chunk at every paragraph."""
+
+    target: int = TARGET_TOKENS
+    max: int = MAX_TOKENS
+    overlap: int = OVERLAP_TOKENS
+    per_paragraph: bool = False
+
+
+CHUNK_V1 = ChunkConfig()
+
+
+@dataclass(frozen=True)
 class Span:
     page: int
     bbox: BBox
@@ -87,18 +100,18 @@ def halve(text: str) -> tuple[str, str]:
     return text[:cut].strip(), text[cut:].strip()
 
 
-async def fit(texts: list[str], count_tokens: CountTokens) -> list[tuple[str, int]]:
+async def fit(texts: list[str], count_tokens: CountTokens, target: int) -> list[tuple[str, int]]:
     """Measure texts, halving any that exceed the target until all of them fit."""
     fitted: list[tuple[str, int]] = []
     for text, tokens in zip(texts, await count_tokens(texts), strict=True):
-        if tokens > TARGET_TOKENS:
-            fitted += await fit(list(halve(text)), count_tokens)
+        if tokens > target:
+            fitted += await fit(list(halve(text)), count_tokens, target)
         else:
             fitted.append((text, tokens))
     return fitted
 
 
-async def section_units(section: Section, count_tokens: CountTokens) -> list[Unit]:
+async def section_units(section: Section, count_tokens: CountTokens, target: int) -> list[Unit]:
     blocks = reading_order(section)
     sentences = [
         (index, sentence)
@@ -111,8 +124,8 @@ async def section_units(section: Section, count_tokens: CountTokens) -> list[Uni
     for (index, sentence), tokens in zip(sentences, counts, strict=True):
         block, paragraph = blocks[index]
         pieces = [(sentence, tokens)]
-        if tokens > TARGET_TOKENS:
-            pieces = await fit([sentence], count_tokens)
+        if tokens > target:
+            pieces = await fit([sentence], count_tokens, target)
         units += [
             Unit(
                 text=text,
@@ -127,13 +140,13 @@ async def section_units(section: Section, count_tokens: CountTokens) -> list[Uni
     return units
 
 
-def overlap_tail(units: list[Unit]) -> list[Unit]:
+def overlap_tail(units: list[Unit], overlap: int) -> list[Unit]:
     """The last whole sentences of a chunk, up to the overlap size."""
     tail: list[Unit] = []
     size = 0
     for unit in reversed(units):
         size += unit.tokens
-        if size > OVERLAP_TOKENS:
+        if size > overlap:
             break
         tail.insert(0, unit)
     return tail
@@ -143,28 +156,31 @@ def size_of(units: list[Unit]) -> int:
     return sum(unit.tokens for unit in units)
 
 
-def bundles(units: list[Unit]) -> list[list[Unit]]:
+def bundles(units: list[Unit], config: ChunkConfig) -> list[list[Unit]]:
     """What packing must not split: a paragraph with footnotes, if it fits in one chunk next to
     the overlap. Everything else can break between sentences."""
     result: list[list[Unit]] = []
     for _, members in groupby(units, key=lambda unit: unit.paragraph):
         group = list(members)
-        keep = group[-1].attached and size_of(group) <= MAX_TOKENS - OVERLAP_TOKENS
+        keep = group[-1].attached and size_of(group) <= config.max - config.overlap
         result += [group] if keep else [[unit] for unit in group]
     return result
 
 
-def pack(units: list[Unit]) -> list[list[Unit]]:
+def pack(units: list[Unit], config: ChunkConfig) -> list[list[Unit]]:
     """Fill chunks up to the target. Only a footnote may push a chunk past it, up to the max."""
     groups: list[list[Unit]] = []
     current: list[Unit] = []
     fresh = 0  # bundles that are new to this chunk, so overlap alone never makes a chunk
-    for bundle in bundles(units):
+    for bundle in bundles(units, config):
         size = size_of(current)
-        full = size >= TARGET_TOKENS and not bundle[0].attached
-        if fresh and (full or size + size_of(bundle) > MAX_TOKENS):
+        full = size >= config.target and not bundle[0].attached
+        new_paragraph = (
+            config.per_paragraph and bool(current) and bundle[0].paragraph != current[-1].paragraph
+        )
+        if fresh and (full or new_paragraph or size + size_of(bundle) > config.max):
             groups.append(current)
-            current = overlap_tail(current)
+            current = overlap_tail(current, config.overlap)
             fresh = 0
         current += bundle
         fresh += 1
@@ -189,19 +205,21 @@ def normalized_hash(text: str) -> str:
     return hashlib.sha256(" ".join(text.split()).encode()).hexdigest()
 
 
-async def chunk_document(document: ParsedDocument, count_tokens: CountTokens) -> list[Chunk]:
-    """Chunk every section. Guarantees: never crosses a section, never exceeds MAX_TOKENS."""
+async def chunk_document(
+    document: ParsedDocument, count_tokens: CountTokens, config: ChunkConfig = CHUNK_V1
+) -> list[Chunk]:
+    """Chunk every section. Guarantees: never crosses a section, never exceeds `config.max`."""
     drafts: list[tuple[Section, list[Unit]]] = []
     for section in document.sections:
-        units = await section_units(section, count_tokens)
-        drafts += [(section, group) for group in pack(units)]
+        units = await section_units(section, count_tokens, config.target)
+        drafts += [(section, group) for group in pack(units, config)]
     texts = [join_units(group) for _, group in drafts]
     counts = await count_tokens(texts) if texts else []
     chunks = []
     for ordinal, ((section, group), text, tokens) in enumerate(
         zip(drafts, texts, counts, strict=True)
     ):
-        if tokens > MAX_TOKENS:
+        if tokens > config.max:
             raise ValueError(f"chunk {ordinal} of {section.path!r} has {tokens} tokens")
         chunks.append(
             Chunk(

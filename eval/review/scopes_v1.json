@@ -1,0 +1,229 @@
+{
+  "schema_version": "relevance-scope/v1",
+  "scopes": [
+    {
+      "query_id": "dev-001",
+      "required_scope": "Reportable suspicious activity and applicable conditions; identifier references alone are insufficient.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-002",
+      "required_scope": "Initial-detection deadline plus relevant extension/conditions.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-003",
+      "required_scope": "Currency threshold, transactions covered and aggregation condition.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-004",
+      "required_scope": "Identify/verify beneficial owners, ownership/control prongs and applicable scope.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-005",
+      "required_scope": "Exact filing key term requested by the named advisory; corroboration separately classified.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": true
+    },
+    {
+      "query_id": "dev-006",
+      "required_scope": "Exact key term requested by the named check-fraud alert.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-007",
+      "required_scope": "Ransomware filing key term under the named advisory.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-008",
+      "required_scope": "Aggregate blocked ownership threshold and direct/indirect ownership scope.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-009",
+      "required_scope": "Permitted information sharing, purpose and participation safeguards.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-010",
+      "required_scope": "Correspondent-account due diligence and risk-based requirements.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-011",
+      "required_scope": "PEP identification, approval, source-of-funds/wealth and monitoring obligations as applicable.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-012",
+      "required_scope": "Travel-rule application to VASPs, required information and relevant conditions.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": true
+    },
+    {
+      "query_id": "dev-013",
+      "required_scope": "Program pillars and their substance, including any applicable CDD obligation.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-014",
+      "required_scope": "Observable caregiver theft indicators, beyond topical elder-fraud mention.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-015",
+      "required_scope": "Indicators of alteration/deposit of stolen checks.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-016",
+      "required_scope": "Financial indicators of human trafficking with relevant contextual limitations.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-017",
+      "required_scope": "Persuasion/recruitment mechanics of fraudulent crypto investment schemes.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-018",
+      "required_scope": "Bank-observable indicators of AI-generated identity imagery.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-019",
+      "required_scope": "Risk-based monitoring intensity and updating based on customer risk.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": true
+    },
+    {
+      "query_id": "dev-020",
+      "required_scope": "Response when beneficial-owner identity cannot be verified, including policy-based actions.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-021",
+      "required_scope": "Maritime methods concealing cargo origin and their mechanism.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-022",
+      "required_scope": "Concrete sanctions compliance controls for virtual-currency businesses.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-023",
+      "required_scope": "Sham ownership transfers and retained beneficial control mechanisms.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-024",
+      "required_scope": "Who may test AND how independence is maintained; record any missing facet.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": true
+    },
+    {
+      "query_id": "dev-025",
+      "required_scope": "How professional laundering services are marketed, including channels.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-026",
+      "required_scope": "CRE features linking foreign buyers/opaque structures to laundering exposure.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-027",
+      "required_scope": "Ransomware SAR key term AND filing deadline, preserving conditions.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-028",
+      "required_scope": "OFAC blocked-property reporting deadline AND SAR deadline, distinguishing day units.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-029",
+      "required_scope": "Elder-exploitation red flags AND perpetrator findings from BSA reports.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-030",
+      "required_scope": "Mail-theft check-fraud filing trend AND actionable red flags; distinguish report populations.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": false
+    },
+    {
+      "query_id": "dev-031",
+      "required_scope": "Ongoing monitoring, updating information and risk-based duties beyond initial identification.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": true
+    },
+    {
+      "query_id": "dev-032",
+      "required_scope": "Risk described in the historical citizenship-program advisory AND mitigation; adjudicate historical scope.",
+      "status": "draft_pending_Vinh_review",
+      "reviewer": null,
+      "adjudication_required": true
+    }
+  ]
+}

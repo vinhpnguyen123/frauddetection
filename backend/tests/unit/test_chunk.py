@@ -5,6 +5,7 @@ from app.ingestion.chunk import (
     OVERLAP_TOKENS,
     TARGET_TOKENS,
     Chunk,
+    ChunkConfig,
     Span,
     chunk_document,
     halve,
@@ -241,3 +242,39 @@ async def test_same_text_gives_the_same_hash() -> None:
 
 async def test_empty_document_has_no_chunks() -> None:
     assert await chunks_of() == []
+
+
+async def chunks_with(config: ChunkConfig, *blocks: Block) -> list[Chunk]:
+    document = ParsedDocument(1, (section(*blocks),), 0.0)
+    return await chunk_document(document, count_words, config)
+
+
+async def test_a_smaller_config_keeps_its_own_limits() -> None:
+    config = ChunkConfig(target=30, max=45, overlap=5)
+    chunks = await chunks_with(config, *[body(sentence(10, f"s{i}")) for i in range(12)])
+    assert len(chunks) > 1
+    assert all(chunk.token_count <= config.max for chunk in chunks)
+    assert all(chunk.token_count >= config.target for chunk in chunks[:-1])
+
+
+async def test_per_paragraph_gives_each_paragraph_its_own_chunk() -> None:
+    config = ChunkConfig(overlap=0, per_paragraph=True)
+    chunks = await chunks_with(config, body(sentence(5, "a")), body(sentence(6, "b")))
+    assert [chunk.token_count for chunk in chunks] == [5, 6]
+
+
+async def test_per_paragraph_keeps_a_footnote_with_its_paragraph() -> None:
+    config = ChunkConfig(overlap=0, per_paragraph=True)
+    chunks = await chunks_with(
+        config, body(sentence(5, "a"), marks=("1",)), body(sentence(6, "b")), note("Note.", "1")
+    )
+    assert "Note." in chunks[0].text
+    assert "Note." not in chunks[1].text
+
+
+async def test_per_paragraph_still_splits_a_paragraph_over_the_limit() -> None:
+    config = ChunkConfig(target=10, max=15, overlap=0, per_paragraph=True)
+    text = " ".join(sentence(6, f"s{i}") for i in range(6))
+    chunks = await chunks_with(config, body(text))
+    assert len(chunks) > 1
+    assert all(chunk.token_count <= config.max for chunk in chunks)

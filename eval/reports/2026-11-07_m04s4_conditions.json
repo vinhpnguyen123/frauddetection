@@ -1,0 +1,66 @@
+{
+  "before_dev": {
+    "utc": "2026-11-07T20:20:00.328880+00:00",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "load_averages": [
+      2.62646484375,
+      3.74462890625,
+      3.357421875
+    ],
+    "memory_bytes": "8589934592",
+    "swap": "vm.swapusage: total = 8192.00M  used = 6689.81M  free = 1502.19M  (encrypted)",
+    "thermal": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+    "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    15936.\nPages active:                                 107796.\nPages inactive:                               105133.\nPages speculative:                              1799.\nPages throttled:                                   0.\nPages wired down:                             113174.\nPages purgeable:                                 757.\n\"Translation faults\":                    15392418489.\nPages copy-on-write:                       184051644.\nPages zero filled:                        2989648049.\nPages reactivated:                        5557735778.\nPages purged:                              182602293.\nFile-backed pages:                             70096.\nAnonymous pages:                              144632.\nPages stored in compressor:                  1054522.\nPages occupied by compressor:                 144610.\nDecompressions:                           7812633196.\nCompressions:                             8307954055.\nPageins:                                   411403539.\nPageouts:                                    4494467.\nSwapins:                                   238436474.\nSwapouts:                                  251220293."
+  },
+  "conditions": "Native embedder with cached models only (HF_HUB_OFFLINE=1, TRANSFORMERS_OFFLINE=1), caffeinate -i prevents idle sleep; existing Compose remains running; no pytest/lint jobs run concurrently with benchmark; user applications were not closed. High pre-existing swap means timings are observations on this machine, not an idle-machine guarantee. No retrieval/rerank application cache exists yet. Warm-up excluded by runner.",
+  "after_dev": {
+    "utc": "2026-11-07T20:23:26.802820+00:00",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "load_averages": [
+      13.9619140625,
+      7.5146484375,
+      4.90869140625
+    ],
+    "memory_bytes": "8589934592",
+    "swap": "vm.swapusage: total = 10240.00M  used = 8944.50M  free = 1295.50M  (encrypted)",
+    "thermal": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+    "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                     4189.\nPages active:                                  69715.\nPages inactive:                                66232.\nPages speculative:                              2756.\nPages throttled:                                   0.\nPages wired down:                             132399.\nPages purgeable:                                   2.\n\"Translation faults\":                    15400911068.\nPages copy-on-write:                       184120670.\nPages zero filled:                        2991373778.\nPages reactivated:                        5561016513.\nPages purged:                              182656764.\nFile-backed pages:                             47030.\nAnonymous pages:                               91673.\nPages stored in compressor:                  1280212.\nPages occupied by compressor:                 213180.\nDecompressions:                           7817106529.\nCompressions:                             8313067125.\nPageins:                                   411932707.\nPageouts:                                    4497377.\nSwapins:                                   238807625.\nSwapouts:                                  251736881."
+  },
+  "before_test": {
+    "utc": "2026-11-07T20:23:54.238486+00:00",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "load_averages": [
+      9.9033203125,
+      7.07177734375,
+      4.82373046875
+    ],
+    "memory_bytes": "8589934592",
+    "swap": "vm.swapusage: total = 10240.00M  used = 8867.25M  free = 1372.75M  (encrypted)",
+    "thermal": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+    "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                     4279.\nPages active:                                  72669.\nPages inactive:                                66731.\nPages speculative:                              4999.\nPages throttled:                                   0.\nPages wired down:                             133951.\nPages purgeable:                                  66.\n\"Translation faults\":                    15401395417.\nPages copy-on-write:                       184129578.\nPages zero filled:                        2991439479.\nPages reactivated:                        5561228969.\nPages purged:                              182657924.\nFile-backed pages:                             54758.\nAnonymous pages:                               89641.\nPages stored in compressor:                  1246039.\nPages occupied by compressor:                 205825.\nDecompressions:                           7817322897.\nCompressions:                             8313299781.\nPageins:                                   411963144.\nPageouts:                                    4497613.\nSwapins:                                   238849392.\nSwapouts:                                  251774449."
+  },
+  "after_test": {
+    "utc": "2026-11-07T20:24:19.181881+00:00",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "load_averages": [
+      7.1337890625,
+      6.646484375,
+      4.7353515625
+    ],
+    "memory_bytes": "8589934592",
+    "swap": "vm.swapusage: total = 10240.00M  used = 8737.38M  free = 1502.62M  (encrypted)",
+    "thermal": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+    "vm_stat": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                     3916.\nPages active:                                  71140.\nPages inactive:                                69081.\nPages speculative:                               864.\nPages throttled:                                   0.\nPages wired down:                             128582.\nPages purgeable:                                   2.\n\"Translation faults\":                    15401838533.\nPages copy-on-write:                       184136760.\nPages zero filled:                        2991501056.\nPages reactivated:                        5561419633.\nPages purged:                              182659985.\nFile-backed pages:                             51360.\nAnonymous pages:                               89725.\nPages stored in compressor:                  1242497.\nPages occupied by compressor:                 214922.\nDecompressions:                           7817601605.\nCompressions:                             8313590027.\nPageins:                                   411986001.\nPageouts:                                    4497858.\nSwapins:                                   238873719.\nSwapouts:                                  251790713."
+  },
+  "models": {
+    "embed_model": "nomic-ai/nomic-embed-text-v1.5",
+    "embed_model_revision": "e9b6763023c676ca8431644204f50c2b100d9aab",
+    "embed_code_revision": "7710840340a098cfb869c4f65e87cf2b1b70caca",
+    "rerank_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "rerank_model_revision": "233902d25c440f23af6f7d6e94d2946bac0bee0a"
+  }
+}

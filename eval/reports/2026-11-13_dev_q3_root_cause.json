@@ -1,0 +1,43 @@
+{
+  "analysis": "post-hoc",
+  "source_report_sha256": "a858bada4079d9c7734069dbdb95b656fa38736d38f49f3aced7653afe445254",
+  "embedding_improved_queries": [
+    "dev-004",
+    "dev-008",
+    "dev-010",
+    "dev-011",
+    "dev-012",
+    "dev-016",
+    "dev-023",
+    "dev-025",
+    "dev-029"
+  ],
+  "embedding_regressed_queries": [
+    "dev-001",
+    "dev-009",
+    "dev-013",
+    "dev-015",
+    "dev-021",
+    "dev-022",
+    "dev-031"
+  ],
+  "reranker_regressed_queries": [
+    "dev-004",
+    "dev-007",
+    "dev-018"
+  ],
+  "dev007_literal_key_term_visible": {
+    "A": true,
+    "C": false
+  },
+  "dev007_relevant_chunk_rank": {
+    "A": 1,
+    "C": 4
+  },
+  "new_runs_performed": false,
+  "unproven": [
+    "unique semantic cause of embedding changes",
+    "sole cause of each reranker score/rank change",
+    "windowed reranking improvement"
+  ]
+}

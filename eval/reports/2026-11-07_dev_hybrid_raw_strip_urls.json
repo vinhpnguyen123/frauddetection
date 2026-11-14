@@ -1,0 +1,762 @@
+{
+  "set": "dev",
+  "set_size": 50,
+  "date": "2026-11-07",
+  "git_sha": "08e2a64",
+  "corpus": "43 documents, 1326 chunks, nomic-ai/nomic-embed-text-v1.5",
+  "labels": "drafted by Claude (an AI model), reviewed item by item by Vinh",
+  "chunks_over_rerank_limit": 215,
+  "unmatched_anchors": 0,
+  "config_name": "hybrid_raw_strip_urls",
+  "config_hash": "3ac4765cb724",
+  "config": {
+    "method": "hybrid",
+    "dense_mode": "exact",
+    "query_expansion": false,
+    "k_bm25": 50,
+    "k_dense": 50,
+    "rrf_k": 60,
+    "rerank_model": null,
+    "rerank_top_n": null,
+    "parent_expansion": false
+  },
+  "real": {
+    "n": 32,
+    "p_at_5": {
+      "mean": 0.19375,
+      "ci95": [
+        0.1375,
+        0.25625
+      ]
+    },
+    "recall_at_20": {
+      "mean": 0.8424479166666666,
+      "ci95": [
+        0.7330729166666666,
+        0.9375
+      ]
+    },
+    "mrr": {
+      "mean": 0.5492931547619048,
+      "ci95": [
+        0.41127232142857145,
+        0.6861979166666666
+      ]
+    },
+    "p_ceiling": 0.41875
+  },
+  "synthetic": {
+    "n": 8,
+    "p_at_5": {
+      "mean": 0.15000000000000002,
+      "ci95": [
+        0.07500000000000001,
+        0.25
+      ]
+    },
+    "recall_at_20": {
+      "mean": 0.875,
+      "ci95": [
+        0.625,
+        1.0
+      ]
+    },
+    "mrr": {
+      "mean": 0.6408730158730158,
+      "ci95": [
+        0.2906746031746032,
+        1.0
+      ]
+    },
+    "p_ceiling": 0.25
+  },
+  "real_by_category": {
+    "identifier": {
+      "n": 13,
+      "p_at_5": {
+        "mean": 0.23076923076923078,
+        "ci95": [
+          0.13846153846153847,
+          0.3384615384615385
+        ]
+      },
+      "recall_at_20": {
+        "mean": 0.7724358974358974,
+        "ci95": [
+          0.592948717948718,
+          0.9230769230769231
+        ]
+      },
+      "mrr": {
+        "mean": 0.5897435897435898,
+        "ci95": [
+          0.36538461538461536,
+          0.7884615384615384
+        ]
+      },
+      "p_ceiling": 0.47692307692307695
+    },
+    "concept": {
+      "n": 13,
+      "p_at_5": {
+        "mean": 0.12307692307692308,
+        "ci95": [
+          0.07692307692307693,
+          0.16923076923076924
+        ]
+      },
+      "recall_at_20": {
+        "mean": 0.8397435897435896,
+        "ci95": [
+          0.6730769230769231,
+          0.9807692307692307
+        ]
+      },
+      "mrr": {
+        "mean": 0.45467032967032966,
+        "ci95": [
+          0.26053113553113555,
+          0.6552197802197802
+        ]
+      },
+      "p_ceiling": 0.3384615384615385
+    },
+    "multi_hop": {
+      "n": 6,
+      "p_at_5": {
+        "mean": 0.26666666666666666,
+        "ci95": [
+          0.20000000000000004,
+          0.39999999999999997
+        ]
+      },
+      "recall_at_20": {
+        "mean": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ]
+      },
+      "mrr": {
+        "mean": 0.6666666666666666,
+        "ci95": [
+          0.375,
+          0.9166666666666666
+        ]
+      },
+      "p_ceiling": 0.4666666666666666
+    }
+  },
+  "latency_ms": {
+    "p50": 154.54950009007007,
+    "p95": 197.56887492258102
+  },
+  "leaks": [],
+  "failures": [
+    "dev-005",
+    "dev-025",
+    "dev-036"
+  ],
+  "items": [
+    {
+      "id": "dev-001",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.0,
+      "p_ceiling": 0.6,
+      "recall_at_20": 0.6666666666666666,
+      "mrr": 0.08333333333333333,
+      "latency_ms": 251.07754208147526,
+      "leaks": []
+    },
+    {
+      "id": "dev-002",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 150.24624997749925,
+      "leaks": []
+    },
+    {
+      "id": "dev-003",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.6,
+      "p_ceiling": 1.0,
+      "recall_at_20": 0.875,
+      "mrr": 1.0,
+      "latency_ms": 173.70866693090647,
+      "leaks": []
+    },
+    {
+      "id": "dev-004",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.0,
+      "p_ceiling": 0.4,
+      "recall_at_20": 1.0,
+      "mrr": 0.16666666666666666,
+      "latency_ms": 270.4075410729274,
+      "leaks": []
+    },
+    {
+      "id": "dev-005",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.0,
+      "p_ceiling": 0.4,
+      "recall_at_20": 0.0,
+      "mrr": 0.0,
+      "latency_ms": 197.56887492258102,
+      "leaks": []
+    },
+    {
+      "id": "dev-006",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 158.07370899710804,
+      "leaks": []
+    },
+    {
+      "id": "dev-007",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 158.46937499009073,
+      "leaks": []
+    },
+    {
+      "id": "dev-008",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.4,
+      "recall_at_20": 0.5,
+      "mrr": 0.5,
+      "latency_ms": 163.74987503513694,
+      "leaks": []
+    },
+    {
+      "id": "dev-009",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.6,
+      "p_ceiling": 1.0,
+      "recall_at_20": 1.0,
+      "mrr": 0.3333333333333333,
+      "latency_ms": 155.293625080958,
+      "leaks": []
+    },
+    {
+      "id": "dev-010",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.4,
+      "p_ceiling": 0.4,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 154.54950009007007,
+      "leaks": []
+    },
+    {
+      "id": "dev-011",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.4,
+      "recall_at_20": 0.6666666666666666,
+      "mrr": 0.3333333333333333,
+      "latency_ms": 148.00912502687424,
+      "leaks": []
+    },
+    {
+      "id": "dev-012",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.8,
+      "recall_at_20": 0.3333333333333333,
+      "mrr": 0.25,
+      "latency_ms": 141.69525005854666,
+      "leaks": []
+    },
+    {
+      "id": "dev-013",
+      "category": "identifier",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 143.29304196871817,
+      "leaks": []
+    },
+    {
+      "id": "dev-014",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 0.5,
+      "latency_ms": 142.81970891170204,
+      "leaks": []
+    },
+    {
+      "id": "dev-015",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.0,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 0.14285714285714285,
+      "latency_ms": 145.0195830548182,
+      "leaks": []
+    },
+    {
+      "id": "dev-016",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 142.5442500039935,
+      "leaks": []
+    },
+    {
+      "id": "dev-017",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.0,
+      "p_ceiling": 0.4,
+      "recall_at_20": 0.5,
+      "mrr": 0.125,
+      "latency_ms": 142.27483293507248,
+      "leaks": []
+    },
+    {
+      "id": "dev-018",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.0,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 0.14285714285714285,
+      "latency_ms": 150.38008289411664,
+      "leaks": []
+    },
+    {
+      "id": "dev-019",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.8,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 181.77433300297707,
+      "leaks": []
+    },
+    {
+      "id": "dev-020",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 0.25,
+      "latency_ms": 193.8329170225188,
+      "leaks": []
+    },
+    {
+      "id": "dev-021",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.4,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 179.35495800338686,
+      "leaks": []
+    },
+    {
+      "id": "dev-022",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.6,
+      "recall_at_20": 0.6666666666666666,
+      "mrr": 0.3333333333333333,
+      "latency_ms": 183.383334078826,
+      "leaks": []
+    },
+    {
+      "id": "dev-023",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.6,
+      "recall_at_20": 0.75,
+      "mrr": 1.0,
+      "latency_ms": 152.0457500591874,
+      "leaks": []
+    },
+    {
+      "id": "dev-024",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 0.25,
+      "latency_ms": 150.86916601285338,
+      "leaks": []
+    },
+    {
+      "id": "dev-025",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.0,
+      "p_ceiling": 0.2,
+      "recall_at_20": 0.0,
+      "mrr": 0.0,
+      "latency_ms": 158.0293329898268,
+      "leaks": []
+    },
+    {
+      "id": "dev-026",
+      "category": "concept",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.0,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 0.16666666666666666,
+      "latency_ms": 148.82554195355624,
+      "leaks": []
+    },
+    {
+      "id": "dev-027",
+      "category": "multi_hop",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.4,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 153.86737510561943,
+      "leaks": []
+    },
+    {
+      "id": "dev-028",
+      "category": "multi_hop",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.6,
+      "recall_at_20": 1.0,
+      "mrr": 0.5,
+      "latency_ms": 147.62312499806285,
+      "leaks": []
+    },
+    {
+      "id": "dev-029",
+      "category": "multi_hop",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.4,
+      "recall_at_20": 1.0,
+      "mrr": 0.25,
+      "latency_ms": 156.1937079532072,
+      "leaks": []
+    },
+    {
+      "id": "dev-030",
+      "category": "multi_hop",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.6,
+      "p_ceiling": 0.6,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 161.23679094016552,
+      "leaks": []
+    },
+    {
+      "id": "dev-031",
+      "category": "multi_hop",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.6,
+      "recall_at_20": 1.0,
+      "mrr": 0.25,
+      "latency_ms": 159.51429202686995,
+      "leaks": []
+    },
+    {
+      "id": "dev-032",
+      "category": "multi_hop",
+      "data_kind": "real",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 155.4814170813188,
+      "leaks": []
+    },
+    {
+      "id": "dev-033",
+      "category": "concept",
+      "data_kind": "synthetic",
+      "answerable": true,
+      "p_at_5": 0.4,
+      "p_ceiling": 0.4,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 155.38562496658415,
+      "leaks": []
+    },
+    {
+      "id": "dev-034",
+      "category": "concept",
+      "data_kind": "synthetic",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 148.30379106570035,
+      "leaks": []
+    },
+    {
+      "id": "dev-035",
+      "category": "concept",
+      "data_kind": "synthetic",
+      "answerable": true,
+      "p_at_5": 0.0,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 0.07142857142857142,
+      "latency_ms": 155.19237495027483,
+      "leaks": []
+    },
+    {
+      "id": "dev-036",
+      "category": "concept",
+      "data_kind": "synthetic",
+      "answerable": true,
+      "p_at_5": 0.0,
+      "p_ceiling": 0.4,
+      "recall_at_20": 0.0,
+      "mrr": 0.0,
+      "latency_ms": 156.03462501894683,
+      "leaks": []
+    },
+    {
+      "id": "dev-037",
+      "category": "concept",
+      "data_kind": "synthetic",
+      "answerable": true,
+      "p_at_5": 0.0,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 0.05555555555555555,
+      "latency_ms": 152.70424995105714,
+      "leaks": []
+    },
+    {
+      "id": "dev-038",
+      "category": "concept",
+      "data_kind": "synthetic",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 157.72058395668864,
+      "leaks": []
+    },
+    {
+      "id": "dev-039",
+      "category": "concept",
+      "data_kind": "synthetic",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 153.61720800865442,
+      "leaks": []
+    },
+    {
+      "id": "dev-040",
+      "category": "concept",
+      "data_kind": "synthetic",
+      "answerable": true,
+      "p_at_5": 0.2,
+      "p_ceiling": 0.2,
+      "recall_at_20": 1.0,
+      "mrr": 1.0,
+      "latency_ms": 158.9284169021994,
+      "leaks": []
+    },
+    {
+      "id": "dev-041",
+      "category": null,
+      "data_kind": "real",
+      "answerable": false,
+      "p_at_5": null,
+      "p_ceiling": null,
+      "recall_at_20": null,
+      "mrr": null,
+      "latency_ms": 153.67487503681332,
+      "leaks": []
+    },
+    {
+      "id": "dev-042",
+      "category": null,
+      "data_kind": "real",
+      "answerable": false,
+      "p_at_5": null,
+      "p_ceiling": null,
+      "recall_at_20": null,
+      "mrr": null,
+      "latency_ms": 158.11495808884501,
+      "leaks": []
+    },
+    {
+      "id": "dev-043",
+      "category": null,
+      "data_kind": "real",
+      "answerable": false,
+      "p_at_5": null,
+      "p_ceiling": null,
+      "recall_at_20": null,
+      "mrr": null,
+      "latency_ms": 151.57562505919486,
+      "leaks": []
+    },
+    {
+      "id": "dev-044",
+      "category": null,
+      "data_kind": "real",
+      "answerable": false,
+      "p_at_5": null,
+      "p_ceiling": null,
+      "recall_at_20": null,
+      "mrr": null,
+      "latency_ms": 151.9066250184551,
+      "leaks": []
+    },
+    {
+      "id": "dev-045",
+      "category": null,
+      "data_kind": "real",
+      "answerable": false,
+      "p_at_5": null,
+      "p_ceiling": null,
+      "recall_at_20": null,
+      "mrr": null,
+      "latency_ms": 153.74754194635898,
+      "leaks": []
+    },
+    {
+      "id": "dev-046",
+      "category": null,
+      "data_kind": "real",
+      "answerable": false,
+      "p_at_5": null,
+      "p_ceiling": null,
+      "recall_at_20": null,
+      "mrr": null,
+      "latency_ms": 154.91970803122967,
+      "leaks": []
+    },
+    {
+      "id": "dev-047",
+      "category": null,
+      "data_kind": "real",
+      "answerable": false,
+      "p_at_5": null,
+      "p_ceiling": null,
+      "recall_at_20": null,
+      "mrr": null,
+      "latency_ms": 156.32908302359283,
+      "leaks": []
+    },
+    {
+      "id": "dev-048",
+      "category": null,
+      "data_kind": "real",
+      "answerable": false,
+      "p_at_5": null,
+      "p_ceiling": null,
+      "recall_at_20": null,
+      "mrr": null,
+      "latency_ms": 152.76724996510893,
+      "leaks": []
+    },
+    {
+      "id": "dev-049",
+      "category": null,
+      "data_kind": "real",
+      "answerable": false,
+      "p_at_5": null,
+      "p_ceiling": null,
+      "recall_at_20": null,
+      "mrr": null,
+      "latency_ms": 152.67099998891354,
+      "leaks": []
+    },
+    {
+      "id": "dev-050",
+      "category": null,
+      "data_kind": "real",
+      "answerable": false,
+      "p_at_5": null,
+      "p_ceiling": null,
+      "recall_at_20": null,
+      "mrr": null,
+      "latency_ms": 151.7800830770284,
+      "leaks": []
+    }
+  ]
+}

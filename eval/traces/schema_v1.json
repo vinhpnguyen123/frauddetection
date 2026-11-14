@@ -1,0 +1,444 @@
+{
+  "$defs": {
+    "Candidate": {
+      "additionalProperties": false,
+      "properties": {
+        "chunk_id": {
+          "format": "uuid",
+          "title": "Chunk Id",
+          "type": "string"
+        },
+        "document_id": {
+          "format": "uuid",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "version_id": {
+          "format": "uuid",
+          "title": "Version Id",
+          "type": "string"
+        },
+        "rank": {
+          "title": "Rank",
+          "type": "integer"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "method": {
+          "title": "Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "chunk_id",
+        "document_id",
+        "version_id",
+        "rank",
+        "score",
+        "method"
+      ],
+      "title": "Candidate",
+      "type": "object"
+    },
+    "GoldEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "anchor_id": {
+          "title": "Anchor Id",
+          "type": "string"
+        },
+        "chunk_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Chunk Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "anchor_id",
+        "chunk_ids"
+      ],
+      "title": "GoldEvidence",
+      "type": "object"
+    },
+    "RerankerInput": {
+      "additionalProperties": false,
+      "properties": {
+        "chunk_id": {
+          "format": "uuid",
+          "title": "Chunk Id",
+          "type": "string"
+        },
+        "input_rank": {
+          "title": "Input Rank",
+          "type": "integer"
+        },
+        "upstream_rank": {
+          "title": "Upstream Rank",
+          "type": "integer"
+        },
+        "upstream_score": {
+          "title": "Upstream Score",
+          "type": "number"
+        },
+        "score": {
+          "title": "Score",
+          "type": "number"
+        },
+        "tokens": {
+          "$ref": "#/$defs/TokenVisibility"
+        },
+        "anchors": {
+          "items": {
+            "$ref": "#/$defs/VisibleAnchor"
+          },
+          "title": "Anchors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "chunk_id",
+        "input_rank",
+        "upstream_rank",
+        "upstream_score",
+        "score",
+        "tokens",
+        "anchors"
+      ],
+      "title": "RerankerInput",
+      "type": "object"
+    },
+    "RetrievalConfig": {
+      "additionalProperties": false,
+      "description": "Grows with the methods. `k_bm25`, `k_dense` and `rrf_k` apply to hybrid and rerank.\n\n`rerank_model` records the model the embedder service reported for the run.",
+      "properties": {
+        "method": {
+          "enum": [
+            "fts",
+            "bm25",
+            "dense",
+            "hybrid",
+            "rerank"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "dense_mode": {
+          "anyOf": [
+            {
+              "enum": [
+                "exact",
+                "hnsw"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Dense Mode"
+        },
+        "query_expansion": {
+          "default": false,
+          "title": "Query Expansion",
+          "type": "boolean"
+        },
+        "k_bm25": {
+          "default": 50,
+          "title": "K Bm25",
+          "type": "integer"
+        },
+        "k_dense": {
+          "default": 50,
+          "title": "K Dense",
+          "type": "integer"
+        },
+        "rrf_k": {
+          "default": 60,
+          "title": "Rrf K",
+          "type": "integer"
+        },
+        "rerank_model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rerank Model"
+        },
+        "rerank_top_n": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rerank Top N"
+        },
+        "parent_expansion": {
+          "default": false,
+          "title": "Parent Expansion",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "method"
+      ],
+      "title": "RetrievalConfig",
+      "type": "object"
+    },
+    "Stage": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/Candidate"
+          },
+          "title": "Candidates",
+          "type": "array"
+        },
+        "retained_anchor_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Retained Anchor Ids",
+          "type": "array"
+        },
+        "elapsed_ms": {
+          "title": "Elapsed Ms",
+          "type": "number"
+        },
+        "timing": {
+          "enum": [
+            "inclusive",
+            "derived_diagnostic"
+          ],
+          "title": "Timing",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "candidates",
+        "retained_anchor_ids",
+        "elapsed_ms",
+        "timing"
+      ],
+      "title": "Stage",
+      "type": "object"
+    },
+    "TokenVisibility": {
+      "additionalProperties": false,
+      "properties": {
+        "query_tokens": {
+          "minimum": 0,
+          "title": "Query Tokens",
+          "type": "integer"
+        },
+        "document_tokens": {
+          "minimum": 0,
+          "title": "Document Tokens",
+          "type": "integer"
+        },
+        "special_tokens": {
+          "minimum": 0,
+          "title": "Special Tokens",
+          "type": "integer"
+        },
+        "input_tokens": {
+          "minimum": 0,
+          "title": "Input Tokens",
+          "type": "integer"
+        },
+        "effective_tokens": {
+          "minimum": 0,
+          "title": "Effective Tokens",
+          "type": "integer"
+        },
+        "retained_query_tokens": {
+          "minimum": 0,
+          "title": "Retained Query Tokens",
+          "type": "integer"
+        },
+        "retained_document_tokens": {
+          "minimum": 0,
+          "title": "Retained Document Tokens",
+          "type": "integer"
+        },
+        "effective_limit": {
+          "exclusiveMinimum": 0,
+          "title": "Effective Limit",
+          "type": "integer"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "document_visible_ranges": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Document Visible Ranges",
+          "type": "array"
+        },
+        "input_ids_sha256": {
+          "title": "Input Ids Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query_tokens",
+        "document_tokens",
+        "special_tokens",
+        "input_tokens",
+        "effective_tokens",
+        "retained_query_tokens",
+        "retained_document_tokens",
+        "effective_limit",
+        "truncated",
+        "document_visible_ranges",
+        "input_ids_sha256"
+      ],
+      "title": "TokenVisibility",
+      "type": "object"
+    },
+    "VisibleAnchor": {
+      "additionalProperties": false,
+      "properties": {
+        "anchor_id": {
+          "title": "Anchor Id",
+          "type": "string"
+        },
+        "full_quote_visible": {
+          "title": "Full Quote Visible",
+          "type": "boolean"
+        },
+        "label_match_visible": {
+          "title": "Label Match Visible",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "anchor_id",
+        "full_quote_visible",
+        "label_match_visible"
+      ],
+      "title": "VisibleAnchor",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "retrieval-trace/v1",
+      "default": "retrieval-trace/v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "query_id": {
+      "title": "Query Id",
+      "type": "string"
+    },
+    "config_hash": {
+      "title": "Config Hash",
+      "type": "string"
+    },
+    "config": {
+      "$ref": "#/$defs/RetrievalConfig"
+    },
+    "gold": {
+      "items": {
+        "$ref": "#/$defs/GoldEvidence"
+      },
+      "title": "Gold",
+      "type": "array"
+    },
+    "stages": {
+      "items": {
+        "$ref": "#/$defs/Stage"
+      },
+      "title": "Stages",
+      "type": "array"
+    },
+    "reranker_inputs": {
+      "items": {
+        "$ref": "#/$defs/RerankerInput"
+      },
+      "title": "Reranker Inputs",
+      "type": "array"
+    },
+    "reranker_metadata": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      },
+      "title": "Reranker Metadata",
+      "type": "object"
+    },
+    "diagnostics": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "title": "Diagnostics",
+      "type": "object"
+    },
+    "answer_sufficiency": {
+      "default": null,
+      "title": "Answer Sufficiency",
+      "type": "null"
+    },
+    "sufficiency_status": {
+      "const": "unjudged",
+      "default": "unjudged",
+      "title": "Sufficiency Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "query_id",
+    "config_hash",
+    "config",
+    "gold",
+    "stages",
+    "reranker_inputs",
+    "reranker_metadata",
+    "diagnostics"
+  ],
+  "title": "QueryTrace",
+  "type": "object"
+}

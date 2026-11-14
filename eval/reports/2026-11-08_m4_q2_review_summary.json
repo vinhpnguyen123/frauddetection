@@ -1,0 +1,237 @@
+{
+  "schema_version": "relevance-review-summary/v1",
+  "status": "awaiting_Vinh_review",
+  "dataset_sha256": "ea823aed602c193d022ed3e84c9f3fed13fac9720f23403152838d53040e049d",
+  "trace_sha256": "3b4a144f281c3a244a6bfdabfeed1cae7c8c27aa030f4d848fe0cee290e02c71",
+  "source_corpus_vectors_sha256": "7b72fccc661ccc39a675e28e272b2c5b3a8a9af45bfd456897077dab553a82b8",
+  "reviewer_sha256": "94285ca710d186864e0522e22502d970bb9b0aebe970707c595394a0ad475045",
+  "queries": [
+    {
+      "query_id": "dev-001",
+      "gold_chunks": 3,
+      "pooled_chunks": 77,
+      "review_units": 77,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-002",
+      "gold_chunks": 1,
+      "pooled_chunks": 66,
+      "review_units": 66,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-003",
+      "gold_chunks": 8,
+      "pooled_chunks": 75,
+      "review_units": 75,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-004",
+      "gold_chunks": 2,
+      "pooled_chunks": 81,
+      "review_units": 81,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-005",
+      "gold_chunks": 2,
+      "pooled_chunks": 74,
+      "review_units": 74,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-006",
+      "gold_chunks": 1,
+      "pooled_chunks": 70,
+      "review_units": 70,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-007",
+      "gold_chunks": 1,
+      "pooled_chunks": 64,
+      "review_units": 64,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-008",
+      "gold_chunks": 2,
+      "pooled_chunks": 62,
+      "review_units": 62,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-009",
+      "gold_chunks": 9,
+      "pooled_chunks": 79,
+      "review_units": 79,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-010",
+      "gold_chunks": 2,
+      "pooled_chunks": 46,
+      "review_units": 46,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-011",
+      "gold_chunks": 2,
+      "pooled_chunks": 103,
+      "review_units": 103,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-012",
+      "gold_chunks": 4,
+      "pooled_chunks": 77,
+      "review_units": 77,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-013",
+      "gold_chunks": 1,
+      "pooled_chunks": 71,
+      "review_units": 71,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-014",
+      "gold_chunks": 1,
+      "pooled_chunks": 77,
+      "review_units": 77,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-015",
+      "gold_chunks": 1,
+      "pooled_chunks": 44,
+      "review_units": 44,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-016",
+      "gold_chunks": 1,
+      "pooled_chunks": 56,
+      "review_units": 56,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-017",
+      "gold_chunks": 2,
+      "pooled_chunks": 58,
+      "review_units": 58,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-018",
+      "gold_chunks": 1,
+      "pooled_chunks": 74,
+      "review_units": 74,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-019",
+      "gold_chunks": 4,
+      "pooled_chunks": 71,
+      "review_units": 71,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-020",
+      "gold_chunks": 1,
+      "pooled_chunks": 83,
+      "review_units": 83,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-021",
+      "gold_chunks": 2,
+      "pooled_chunks": 80,
+      "review_units": 80,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-022",
+      "gold_chunks": 3,
+      "pooled_chunks": 87,
+      "review_units": 87,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-023",
+      "gold_chunks": 3,
+      "pooled_chunks": 100,
+      "review_units": 100,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-024",
+      "gold_chunks": 1,
+      "pooled_chunks": 73,
+      "review_units": 73,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-025",
+      "gold_chunks": 1,
+      "pooled_chunks": 93,
+      "review_units": 93,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-026",
+      "gold_chunks": 1,
+      "pooled_chunks": 85,
+      "review_units": 85,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-027",
+      "gold_chunks": 2,
+      "pooled_chunks": 63,
+      "review_units": 63,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-028",
+      "gold_chunks": 3,
+      "pooled_chunks": 64,
+      "review_units": 64,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-029",
+      "gold_chunks": 2,
+      "pooled_chunks": 60,
+      "review_units": 60,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-030",
+      "gold_chunks": 3,
+      "pooled_chunks": 44,
+      "review_units": 44,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-031",
+      "gold_chunks": 3,
+      "pooled_chunks": 63,
+      "review_units": 63,
+      "judged_units": 0
+    },
+    {
+      "query_id": "dev-032",
+      "gold_chunks": 1,
+      "pooled_chunks": 94,
+      "review_units": 94,
+      "judged_units": 0
+    }
+  ],
+  "sufficiency_sets": 125,
+  "scope_status": "all_32_draft_pending_review",
+  "accepted_label_changes": 0
+}
