@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from app import cache, db
 from app.api import health
 from app.config import get_settings
+from app.errors import install_handler
 
 
 @asynccontextmanager
@@ -22,4 +23,5 @@ def create_app() -> FastAPI:
     """Build the API application."""
     app = FastAPI(title="FraudDetection", lifespan=lifespan)
     app.include_router(health.router)
+    install_handler(app)
     return app

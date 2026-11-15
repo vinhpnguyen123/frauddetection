@@ -16,6 +16,7 @@ from sqlalchemy import ColumnElement, and_, func, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.errors import IngestionFailed
 from app.ingestion.chunk import MAX_TOKENS, Chunk, chunk_document
 from app.ingestion.parse import ParsedDocument, parse_pdf, quality_flags
 from app.models import Chunk as ChunkRow
@@ -28,10 +29,6 @@ MAX_ERROR_CHARS = 500
 # A job untouched for this long has lost its worker or its message. Well above the slowest
 # document, and a wrong guess is safe: attempts fence off the older run.
 STALE_AFTER = timedelta(minutes=10)
-
-
-class IngestionFailed(Exception):
-    """A failure that a retry cannot fix, such as a corrupt file or a broken document."""
 
 
 class JobBusy(Exception):

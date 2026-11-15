@@ -23,6 +23,12 @@ class Settings(BaseSettings):
     seed_password: SecretStr | None = None  # dev only, read by scripts/seed.py
     download_contact_email: str | None = None  # dev only, read by scripts/download.py
     embed_model: str | None = None  # the embedder owns it; eval reports only record it
+    # Gemini (M5-S1). Optional so CI and the API start without a key; the provider
+    # factory raises if they are missing when an LLM call is actually built.
+    gemini_api_key: SecretStr | None = None
+    gemini_model: str | None = None  # e.g. a Flash id from the pinned docs; never hard-coded
+    gemini_base_url: str = "https://generativelanguage.googleapis.com/v1beta"
+    llm_timeout_seconds: float = 60.0
 
 
 @lru_cache
